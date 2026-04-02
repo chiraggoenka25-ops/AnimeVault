@@ -19,35 +19,21 @@
     --panel-bg: rgba(255, 255, 255, 0.05);
     --card-bg: rgba(0, 0, 0, 0.4);
     --border: rgba(255, 255, 255, 0.1);
+    --text-muted: #94a3b8;
+    --shadow-elite: 0 10px 40px -10px rgba(0,0,0,0.5);
   }
 
   [data-theme="light"] {
-    --background: #f8fafc;
-    --foreground: #0f172a;
+    --background: #F8F9FD; /* Studio White */
+    --foreground: #020617; /* Deep Slate */
     --aura-primary: #7c3aed;
     --aura-secondary: #db2777;
-    --aura-glow: rgba(124, 58, 237, 0.2);
-    --panel-bg: rgba(139, 92, 246, 0.05);
+    --aura-glow: rgba(124, 58, 237, 0.15);
+    --panel-bg: rgba(255, 255, 255, 0.8); /* Frosted Glass */
     --card-bg: #ffffff;
-    --border: rgba(15, 23, 42, 0.1);
-  }
-
-  [data-aura="naruto"] {
-    --aura-primary: #f97316;
-    --aura-secondary: #000;
-    --aura-glow: rgba(249, 115, 22, 0.5);
-  }
-
-  [data-aura="demon-slayer"] {
-    --aura-primary: #10b981;
-    --aura-secondary: #ec4899;
-    --aura-glow: rgba(16, 185, 129, 0.5);
-  }
-
-  [data-aura="cyberpunk"] {
-    --aura-primary: #facc15;
-    --aura-secondary: #3b82f6;
-    --aura-glow: rgba(250, 204, 21, 0.5);
+    --border: rgba(71, 85, 105, 0.1);
+    --text-muted: #64748b;
+    --shadow-elite: 0 10px 40px -12px rgba(0,0,0,0.1);
   }
 }
 
@@ -56,38 +42,42 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-/* Glassmorphism Utilities */
+/* Elite Glassmorphism Utilities v4.2 */
 @layer utilities {
   .glass-panel {
     background: var(--panel-bg);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
     border: 1px solid var(--border);
-    box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-elite);
+    transition: all 0.5s ease;
   }
   
   .glass-card {
     background: var(--card-bg);
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px);
     border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    transition: all 0.3s ease;
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-elite);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .glass-card:hover {
     border-color: var(--aura-primary);
-    box-shadow: 0 0 20px var(--aura-glow);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 50px -15px var(--aura-glow);
   }
   
   .aura-text {
-    text-shadow: 0 0 10px var(--aura-glow), 0 0 20px var(--aura-glow);
+    text-shadow: 0 0 10px var(--aura-glow);
     color: var(--aura-primary);
   }
   
   .aura-border {
     border-color: var(--border);
-    box-shadow: 0 0 15px var(--aura-glow);
+    box-shadow: 0 0 20px var(--aura-glow);
   }
 
   .aura-bg {
@@ -95,32 +85,29 @@ body {
   }
 }
 
-/* Custom Scrollbar for Anime Feel */
+/* Custom Scrollbar for Infinity Theme */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-dark-bg);
+  background: var(--background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-neon-purple);
-  border-radius: 4px;
+  background: linear-gradient(to bottom, var(--aura-primary), var(--aura-secondary));
+  border-radius: 5px;
+  border: 2px solid var(--background);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-neon-pink);
-}
-
-/* v4.1 Ultra-Premium Animations */
+/* v4.2 Infinity Animations */
 @keyframes rotate-gradient {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
 .animate-rotate-gradient {
-  animation: rotate-gradient 4s linear infinite;
+  animation: rotate-gradient 6s linear infinite;
 }
 
 .holographic-glow {
@@ -136,8 +123,12 @@ body {
   width: 300%;
   height: 300%;
   background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-  transition: all 0.5s ease;
+  transition: all 0.6s ease;
   pointer-events: none;
+}
+
+[data-theme="light"] .holographic-glow::after {
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.05) 0%, transparent 70%);
 }
 
 .holographic-glow:hover::after {
