@@ -3,12 +3,12 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import TopBar from "@/components/TopBar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { usePathname } from "next/navigation";
 
 const inter = Inter({ subsets: ["latin"] });
-
-
 
 export default function RootLayout({
   children,
@@ -16,6 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [aura, setAura] = useState("default");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const fetchAura = async () => {
@@ -27,7 +29,6 @@ export default function RootLayout({
     };
     fetchAura();
 
-    // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then((reg) => {
@@ -47,6 +48,8 @@ export default function RootLayout({
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const showNav = pathname !== '/login' && pathname !== '/register';
+
   return (
     <html lang="en" className="dark" data-aura={aura}>
       <head>
@@ -58,12 +61,25 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1541562232579-512a21360020?q=80&w=192&auto=format&fit=crop" />
       </head>
-      <body className={`${inter.className} bg-dark-bg text-slate-100 flex h-screen overflow-hidden`}>
-        <Sidebar aria-aura={aura} />
-        <main className="flex-1 overflow-y-auto relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/5 via-black to-blue-900/5 -z-10" />
-          {children}
-        </main>
+      <body className={`${inter.className} bg-dark-bg text-slate-100 flex flex-col h-screen overflow-hidden`}>
+        {showNav && (
+          <TopBar 
+            onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+            isSidebarOpen={isSidebarOpen} 
+          />
+        )}
+        <div className="flex flex-1 overflow-hidden relative">
+          {showNav && (
+            <Sidebar 
+              isOpen={isSidebarOpen} 
+              onClose={() => setIsSidebarOpen(false)} 
+            />
+          )}
+          <main className={`flex-1 overflow-y-auto relative ${showNav ? 'pt-16' : ''}`}>
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/5 via-black to-blue-900/5 -z-10" />
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   );
