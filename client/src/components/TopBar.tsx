@@ -1,7 +1,8 @@
 "use client";
 
-import { Menu, X, Sparkles } from "lucide-react";
+import { Menu, X, Sparkles, Moon, Sun } from "lucide-react";
 import NotificationsCenter from "./NotificationsCenter";
+import ThemeSwitcher from "./ThemeSwitcher";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -31,13 +32,14 @@ export default function TopBar({ onMenuClick, isSidebarOpen }: TopBarProps) {
         </Link>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+         <ThemeSwitcher />
          <NotificationsCenter />
          <div className="hidden md:block h-6 w-px bg-white/10 mx-2" />
          <div className="hidden md:flex items-center gap-3">
             <div className="text-right">
                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Elite Access</p>
-               <p className="text-[8px] font-bold text-purple-400 uppercase tracking-[0.2em]">v3.1 Production</p>
+               <p className="text-[8px] font-bold text-purple-400 uppercase tracking-[0.2em]">v4.0 Legendary</p>
             </div>
          </div>
       </div>

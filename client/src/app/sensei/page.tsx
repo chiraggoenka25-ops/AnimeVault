@@ -1,128 +1,184 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { API_URL } from "@/lib/api";
+import { Sparkles, Send, Bot, User, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Brain, Loader2, Star, Ghost, Wand2 } from "lucide-react";
-import { apiClient } from "@/lib/api";
-
-type Suggestion = {
-  title: string;
-  reason: string;
-  image: string;
-};
 
 export default function SenseiPage() {
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [isAi, setIsAi] = useState(false);
+  const [messages, setMessages] = useState<any[]>([
+    { role: 'assistant', content: 'Greetings, student. I am your Otaku Sensei. Ask me anything about the world of anime, or just click the microphone to speak your mind.' }
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const chatEndRef = useRef<null | HTMLDivElement>(null);
 
-  async function getRecommendations() {
+  // Speech Recognition Setup
+  const [recognition, setRecognition] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recog = new SpeechRecognition();
+        recog.continuous = false;
+        recog.interimResults = false;
+        recog.lang = 'en-US';
+
+        recog.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInput(transcript);
+          setIsListening(false);
+          handleSendMessage(transcript);
+        };
+
+        recog.onerror = () => setIsListening(false);
+        recog.onend = () => setIsListening(false);
+        setRecognition(recog);
+      }
+    }
+  }, []);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const speak = (text: string) => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.pitch = 0.9;
+      utterance.rate = 1;
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const handleSendMessage = async (customInput?: string) => {
+    const textToSend = customInput || input;
+    if (!textToSend.trim()) return;
+
+    const newMessages = [...messages, { role: 'user', content: textToSend }];
+    setMessages(newMessages);
+    setInput("");
     setLoading(true);
+
     try {
-      const res = await apiClient.post('/ai/recommendations');
-      setMessage(res.data.message);
-      setSuggestions(res.data.recommendations);
-      setIsAi(res.data.isAi);
+      const res = await fetch(`${API_URL}/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: textToSend, history: newMessages })
+      });
+      const data = await res.json();
+      const botMessage = { role: 'assistant', content: data.reply };
+      setMessages(prev => [...prev, botMessage]);
+      speak(data.reply);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  useEffect(() => {
-    getRecommendations();
-  }, []);
+  const toggleListening = () => {
+    if (isListening) {
+      recognition?.stop();
+    } else {
+      setIsListening(true);
+      recognition?.start();
+    }
+  };
 
   return (
-    <div className="p-8 h-full flex flex-col relative w-full overflow-y-auto custom-scrollbar">
-       <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-[150px] -z-10" />
-       <div className="absolute bottom-0 left-0 w-80 h-80 bg-pink-600/10 rounded-full blur-[150px] -z-10" />
-
-       <header className="mb-10">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-purple-600/20 border border-purple-500/30 rounded-2xl shadow-[0_0_20px_rgba(139,92,246,0.3)]">
-               <Brain size={32} className="text-purple-400" />
+    <div className="flex flex-col h-[calc(100vh-64px)] max-w-5xl mx-auto p-4 md:p-8">
+      <header className="mb-8 flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-3 bg-purple-500/10 rounded-2xl aura-border text-purple-400">
+              <Sparkles size={24} />
             </div>
-            <div>
-               <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-400 to-pink-500 tracking-tighter">
-                  Otaku Sensei
-               </h1>
-               <p className="text-slate-500 text-sm font-bold uppercase tracking-widest flex items-center gap-2">
-                 <Sparkles size={14} className="text-yellow-400" /> Your Personal AI Advisor
-               </p>
-            </div>
+            <h1 className="text-3xl font-black tracking-tighter aura-text uppercase italic">Otaku Sensei</h1>
           </div>
-       </header>
+          <p className="text-slate-500 text-sm font-medium">Neural AI trained in the 48 Chambers of Anime Wisdom.</p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+           {isSpeaking && (
+             <motion.div 
+               animate={{ scale: [1, 1.2, 1] }} 
+               transition={{ repeat: Infinity, duration: 1 }}
+               className="p-2 bg-pink-500/20 text-pink-500 rounded-full"
+             >
+                <Volume2 size={20} />
+             </motion.div>
+           )}
+        </div>
+      </header>
 
-       {loading ? (
-         <div className="m-auto flex flex-col items-center gap-4">
-            <Loader2 size={48} className="text-purple-500 animate-spin" />
-            <p className="text-slate-400 font-bold animate-pulse uppercase tracking-[0.3em] text-xs">Analyzing your soul...</p>
-         </div>
-       ) : (
-         <div className="space-y-12">
-            {/* Sensei's Note */}
-            <motion.div 
-               initial={{ opacity: 0, scale: 0.95 }}
-               animate={{ opacity: 1, scale: 1 }}
-               className="glass-panel p-8 rounded-[2rem] border-purple-500/20 relative group shadow-2xl"
+      <div className="flex-1 glass-panel rounded-[2.5rem] p-6 mb-6 overflow-y-auto space-y-6 relative border-2 border-white/5">
+        <AnimatePresence initial={false}>
+          {messages.map((m, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`flex items-start gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
-               <div className="absolute top-4 right-6 p-2 bg-purple-500/10 rounded-lg text-purple-400 text-[10px] uppercase font-black">
-                 {isAi ? "Direct AI Output" : "Simulated Engine"}
-               </div>
-               <div className="flex gap-6 items-start">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                    🍜
-                  </div>
-                  <div className="flex-1">
-                     <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
-                        Sensei's Hot Take <Ghost size={18} className="text-slate-500" />
-                     </h3>
-                     <p className="text-slate-400 leading-relaxed text-lg font-medium italic">
-                        "{message}"
-                     </p>
-                  </div>
-               </div>
+              <div className={`p-3 rounded-2xl border ${
+                m.role === 'assistant' ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' : 'bg-white/5 border-white/10 text-slate-400'
+              }`}>
+                {m.role === 'assistant' ? <Bot size={20} /> : <User size={20} />}
+              </div>
+              <div className={`max-w-[80%] p-5 rounded-3xl ${
+                m.role === 'assistant' ? 'glass-panel text-slate-200' : 'bg-gradient-to-br from-purple-600/80 to-pink-600/80 text-white shadow-xl aura-border'
+              }`}>
+                <p className="text-sm font-medium leading-relaxed">{m.content}</p>
+              </div>
             </motion.div>
+          ))}
+        </AnimatePresence>
+        {loading && (
+          <div className="flex items-center gap-3 text-slate-500">
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full" />
+            <span className="text-[10px] font-black uppercase tracking-widest">Sensei is thinking...</span>
+          </div>
+        )}
+        <div ref={chatEndRef} />
+      </div>
 
-            {/* Recommendations Grid */}
-            <div>
-               <div className="flex items-center gap-4 mb-6">
-                  <h2 className="text-2xl font-black text-white">Curated Recommendations</h2>
-                  <div className="h-px bg-white/10 flex-1" />
-                  <button onClick={getRecommendations} className="p-2 hover:bg-white/5 rounded-full transition-colors text-slate-500 hover:text-purple-400">
-                    <Wand2 size={20} />
-                  </button>
-               </div>
+      <div className="flex items-center gap-4 group">
+        <button 
+           onClick={toggleListening}
+           className={`p-5 rounded-2xl border transition-all duration-300 ${
+             isListening ? 'bg-red-500/20 border-red-500/50 text-red-500 animate-pulse' : 'bg-white/5 border-white/10 text-slate-500 hover:bg-white/10'
+           }`}
+        >
+          {isListening ? <Mic size={24} /> : <MicOff size={24} />}
+        </button>
 
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 {suggestions.map((s, idx) => (
-                   <motion.div 
-                      key={idx}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className="glass-panel rounded-3xl overflow-hidden group border-white/5 hover:border-purple-500/30 transition-all hover:-translate-y-2 shadow-xl"
-                   >
-                      <div className="h-48 overflow-hidden relative">
-                         <img src={s.image} alt={s.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                         <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D15] via-transparent to-transparent opacity-60" />
-                      </div>
-                      <div className="p-6">
-                         <h4 className="text-lg font-black text-white mb-3 truncate">{s.title}</h4>
-                         <p className="text-slate-500 text-sm leading-relaxed mb-4">{s.reason}</p>
-                         <button className="text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1.5 underline-offset-4 hover:underline">
-                           Add to Watchlist +
-                         </button>
-                      </div>
-                   </motion.div>
-                 ))}
-               </div>
-            </div>
-         </div>
-       )}
+        <div className="flex-1 relative">
+          <input 
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+            placeholder={isListening ? "Listening to your thoughts..." : "Consult the Sensei..."}
+            className="w-full bg-white/5 border-2 border-white/5 p-5 rounded-[1.5rem] outline-none focus:border-purple-500/40 text-sm font-medium transition-all"
+          />
+          <button 
+            onClick={() => handleSendMessage()}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl text-white shadow-xl hover:scale-110 active:scale-95 transition-all aura-border"
+          >
+            <Send size={18} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

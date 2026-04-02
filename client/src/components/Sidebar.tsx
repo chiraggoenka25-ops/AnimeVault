@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Home, FolderOpen, ListVideo, PenTool, Users, MessageSquare, User, LogOut, ShieldCheck, Sparkles, Zap, X } from "lucide-react";
+import { Home, FolderOpen, ListVideo, PenTool, Users, MessageSquare, User, LogOut, ShieldCheck, Sparkles, Zap, X, Calendar, BarChart3, Award, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface SidebarProps {
@@ -68,7 +68,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: "Notes & Reviews", href: "/vault/notes", icon: PenTool },
     { name: "Favorite Characters", href: "/vault/characters", icon: Users },
     { name: "Community 🔥", href: "/community", icon: MessageSquare },
+    { name: "Neural Link 🗨️", href: "/messages", icon: MessageCircle },
     { name: "Otaku Sensei 🤖", href: "/sensei", icon: Sparkles },
+    { name: "Release Radar 📅", href: "/calendar", icon: Calendar },
+    { name: "Neural Stats 📊", href: "/stats", icon: BarChart3 },
+    { name: "Achievements 🏆", href: "/achievements", icon: Award },
     { name: "Profile", href: "/profile", icon: User },
   ];
 
@@ -114,7 +118,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
       </div>
 
-      <nav className="flex-1 px-4 space-y-1">
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
@@ -130,8 +134,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   : "text-slate-400 hover:text-white hover:bg-white/5"
               }`}
             >
-              <Icon size={18} className={isActive ? "text-purple-400" : "text-slate-500"} />
-              <span className={`text-sm font-bold uppercase tracking-widest ${isActive ? 'aura-text' : ''}`}>{link.name}</span>
+              <Icon size={16} className={isActive ? "text-purple-400" : "text-slate-500"} />
+              <span className={`text-[11px] font-black uppercase tracking-[0.15em] ${isActive ? 'aura-text' : ''}`}>{link.name}</span>
             </Link>
           );
         })}
@@ -142,8 +146,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           onClick={handleLogout}
           className="flex items-center space-x-3 text-slate-500 hover:text-red-400 transition-colors w-full px-4 py-3 rounded-xl hover:bg-red-400/5 group"
         >
-          <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="text-xs font-black uppercase tracking-widest">Logout</span>
+          <LogOut size={16} className="group-hover:-translate-x-1 transition-transform" />
+          <span className="text-[10px] font-black uppercase tracking-widest">Logout</span>
         </button>
       </div>
     </div>

@@ -15,7 +15,21 @@
     --foreground: #f8fafc;
     --aura-primary: #8b5cf6;
     --aura-secondary: #ec4899;
-    --aura-glow: rgba(139, 92, 246, 0.5);
+    --aura-glow: rgba(139, 92, 246, 0.4);
+    --panel-bg: rgba(255, 255, 255, 0.05);
+    --card-bg: rgba(0, 0, 0, 0.4);
+    --border: rgba(255, 255, 255, 0.1);
+  }
+
+  [data-theme="light"] {
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --aura-primary: #7c3aed;
+    --aura-secondary: #db2777;
+    --aura-glow: rgba(124, 58, 237, 0.2);
+    --panel-bg: rgba(139, 92, 246, 0.05);
+    --card-bg: #ffffff;
+    --border: rgba(15, 23, 42, 0.1);
   }
 
   [data-aura="naruto"] {
@@ -47,11 +61,23 @@ body {
 /* Glassmorphism Utilities */
 @layer utilities {
   .glass-panel {
-    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)];
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.1);
   }
   
   .glass-card {
-    @apply bg-black/40 backdrop-blur-lg border border-white/10 rounded-xl hover:border-neon-purple/50 transition-all duration-300;
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+  }
+  
+  .glass-card:hover {
+    border-color: var(--aura-primary);
+    box-shadow: 0 0 20px var(--aura-glow);
   }
   
   .aura-text {
@@ -60,7 +86,7 @@ body {
   }
   
   .aura-border {
-    border-color: rgba(255,255,255,0.1);
+    border-color: var(--border);
     box-shadow: 0 0 15px var(--aura-glow);
   }
 

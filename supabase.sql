@@ -190,6 +190,58 @@ CREATE TRIGGER on_post_liked
   AFTER INSERT OR UPDATE ON public.votes
   FOR EACH ROW EXECUTE PROCEDURE public.notify_on_like();
 
--- NOTIFICATION TRIGGER: Level Up (Rank change)
--- (Simplified for demo)
+-- 10. Direct Messages
+CREATE TABLE public.messages (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    sender_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+    receiver_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+    content TEXT NOT NULL,
+    read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own messages" ON public.messages FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
+CREATE POLICY "Users can send messages" ON public.messages FOR INSERT WITH CHECK (auth.uid() = sender_id);
+
+-- 11. Achievements
+CREATE TABLE public.achievements (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    xp_reward INTEGER DEFAULT 100
+);
+
+CREATE TABLE public.user_achievements (
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+    achievement_id TEXT REFERENCES public.achievements(id) ON DELETE CASCADE NOT NULL,
+    unlocked_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    PRIMARY KEY (user_id, achievement_id)
+);
+
+ALTER TABLE public.user_achievements ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Achievements are viewable by everyone" ON public.user_achievements FOR SELECT USING (true);
+
+-- Insert Default Achievements
+INSERT INTO public.achievements (id, name, description, icon, xp_reward) VALUES
+('first_post', 'Neural Link Initialized', 'Created your first community post.', 'Zap', 100),
+('vault_10', 'The Archivist', 'Added 10 items to your personal vault.', 'Folder', 200),
+('rank_chunin', 'Chunin Candidate', 'Reached the rank of Chunin.', 'ShieldCheck', 500);
+
+-- Trigger for New User Creation (Fixed)
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- GAMIFICATION: Grant XP on Community Post
+CREATE OR REPLACE FUNCTION public.grant_post_xp()
+RETURNS trigger AS $$
+BEGIN
+  UPDATE public.users 
+  SET xp = xp + 50 
+  WHERE id = NEW.user_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 

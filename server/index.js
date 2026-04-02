@@ -26,12 +26,16 @@ const vaultRoutes = require('./routes/vault');
 const communityRoutes = require('./routes/community');
 const profileRoutes = require('./routes/profile');
 const aiRoutes = require('./routes/ai');
+const animeRoutes = require('./routes/anime');
+const achievementRoutes = require('./routes/achievements');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/vault', vaultRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/anime', animeRoutes);
+app.use('/api/achievements', achievementRoutes);
 
 // Start Server
 app.listen(port, () => {
