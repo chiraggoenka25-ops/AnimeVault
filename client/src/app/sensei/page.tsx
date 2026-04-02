@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { API_URL } from "@/lib/api";
 import { Sparkles, Send, Bot, User, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
 
 export default function SenseiPage() {
   const [messages, setMessages] = useState<any[]>([
@@ -16,7 +17,7 @@ export default function SenseiPage() {
   const chatEndRef = useRef<null | HTMLDivElement>(null);
 
   // Speech Recognition Setup
-  const [recognition, setRecognition] = useState<any>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -34,9 +35,16 @@ export default function SenseiPage() {
           handleSendMessage(transcript);
         };
 
-        recog.onerror = () => setIsListening(false);
+        recog.onerror = (event: any) => {
+          console.error("Speech Recognition Error:", event.error);
+          setIsListening(false);
+          if (event.error === 'not-allowed') {
+            toast.error("Microphone Access Denied! Please enable permissions in your browser.");
+          }
+        };
+
         recog.onend = () => setIsListening(false);
-        setRecognition(recog);
+        recognitionRef.current = recog;
       }
     }
   }, []);
@@ -73,26 +81,45 @@ export default function SenseiPage() {
     try {
       const res = await fetch(`${API_URL}/ai/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ message: textToSend, history: newMessages })
       });
+      
       const data = await res.json();
+      
+      if (data.error) {
+        toast.error("Sensei is meditating on your question... (Server Error)");
+        return;
+      }
+
       const botMessage = { role: 'assistant', content: data.reply };
       setMessages(prev => [...prev, botMessage]);
       speak(data.reply);
     } catch (err) {
       console.error(err);
+      toast.error("An error occurred reaching the Sensei.");
     } finally {
       setLoading(false);
     }
   };
 
   const toggleListening = () => {
+    if (!recognitionRef.current) {
+      toast.error("Speech Recognition is not supported in this browser.");
+      return;
+    }
+
     if (isListening) {
-      recognition?.stop();
+      recognitionRef.current.stop();
     } else {
       setIsListening(true);
-      recognition?.start();
+      try {
+        recognitionRef.current.start();
+      } catch (err) {
+        setIsListening(false);
+      }
     }
   };
 
@@ -101,7 +128,7 @@ export default function SenseiPage() {
       <header className="mb-8 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-purple-500/10 rounded-2xl aura-border text-purple-400">
+            <div className="p-3 bg-purple-500/10 rounded-2xl aura-border text-purple-400 shadow-[0_0_15px_rgba(139,92,246,0.3)]">
               <Sparkles size={24} />
             </div>
             <h1 className="text-3xl font-black tracking-tighter aura-text uppercase italic">Otaku Sensei</h1>
@@ -114,15 +141,18 @@ export default function SenseiPage() {
              <motion.div 
                animate={{ scale: [1, 1.2, 1] }} 
                transition={{ repeat: Infinity, duration: 1 }}
-               className="p-2 bg-pink-500/20 text-pink-500 rounded-full"
+               className="flex items-center gap-2 px-4 py-2 bg-pink-500/10 text-pink-500 rounded-full border border-pink-500/20"
              >
-                <Volume2 size={20} />
+                <div className="flex gap-1">
+                   {[1,2,3].map(i => <div key={i} className="w-1 h-3 bg-pink-500 animate-pulse" />)}
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest">Sensei is speaking...</span>
              </motion.div>
            )}
         </div>
       </header>
 
-      <div className="flex-1 glass-panel rounded-[2.5rem] p-6 mb-6 overflow-y-auto space-y-6 relative border-2 border-white/5">
+      <div className="flex-1 glass-panel rounded-[2.5rem] p-6 mb-6 overflow-y-auto space-y-6 relative border-2 border-white/5 bg-black/20">
         <AnimatePresence initial={false}>
           {messages.map((m, idx) => (
             <motion.div
@@ -147,7 +177,7 @@ export default function SenseiPage() {
         {loading && (
           <div className="flex items-center gap-3 text-slate-500">
             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Sensei is thinking...</span>
+            <span className="text-[10px] font-black uppercase tracking-widest">Consulting the Scrolls...</span>
           </div>
         )}
         <div ref={chatEndRef} />
@@ -156,11 +186,13 @@ export default function SenseiPage() {
       <div className="flex items-center gap-4 group">
         <button 
            onClick={toggleListening}
-           className={`p-5 rounded-2xl border transition-all duration-300 ${
-             isListening ? 'bg-red-500/20 border-red-500/50 text-red-500 animate-pulse' : 'bg-white/5 border-white/10 text-slate-500 hover:bg-white/10'
+           className={`p-5 rounded-2xl border transition-all duration-500 ${
+             isListening 
+                ? 'bg-red-500/20 border-red-500/50 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)]' 
+                : 'bg-white/5 border-white/10 text-slate-500 hover:bg-white/10'
            }`}
         >
-          {isListening ? <Mic size={24} /> : <MicOff size={24} />}
+          {isListening ? <Mic size={24} className="animate-pulse" /> : <MicOff size={24} />}
         </button>
 
         <div className="flex-1 relative">
@@ -168,8 +200,8 @@ export default function SenseiPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder={isListening ? "Listening to your thoughts..." : "Consult the Sensei..."}
-            className="w-full bg-white/5 border-2 border-white/5 p-5 rounded-[1.5rem] outline-none focus:border-purple-500/40 text-sm font-medium transition-all"
+            placeholder={isListening ? "Listening to your spirit voice..." : "Consult the Sensei..."}
+            className="w-full bg-white/5 border-2 border-white/5 p-5 rounded-[1.5rem] outline-none focus:border-purple-500/40 text-sm font-medium transition-all group-hover:bg-white/[0.08]"
           />
           <button 
             onClick={() => handleSendMessage()}

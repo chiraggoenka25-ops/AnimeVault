@@ -77,36 +77,30 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   ];
 
   const sidebarContent = (
-    <div className="w-64 h-full glass-panel border-r border-white/10 flex flex-col pt-6 pb-4 shrink-0 shadow-2xl">
-      <div className="px-6 mb-8 mt-2 md:mt-0">
-        <div className="flex items-center justify-between md:hidden mb-6">
-           <span className="text-xs font-black tracking-widest text-slate-500 uppercase">Navigation</span>
-           <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-slate-400">
-              <X size={20} />
-           </button>
-        </div>
-
+    <div className="w-64 h-full glass-panel border-r border-white/10 flex flex-col pt-4 pb-4 shrink-0 shadow-2xl relative">
+      <div className="px-6 mb-4 mt-16 md:mt-4">
         {userData && (
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="p-4 rounded-xl bg-white/5 border border-white/5 aura-border shadow-lg"
+            className="p-4 rounded-xl bg-white/5 border border-white/5 aura-border shadow-lg relative overflow-hidden group"
           >
-            <div className="flex items-center justify-between mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <Sparkles size={12} className="text-purple-400" /> Rank
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex items-center justify-between mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 relative z-10">
+              <span className="flex items-center gap-1.5 ">
+                <Sparkles size={11} className="text-purple-400" /> Rank
               </span>
               <span className={`px-2 py-0.5 rounded border ${getRank(userData.xp).bg} ${getRank(userData.xp).color} ${getRank(userData.xp).border}`}>
                 {getRank(userData.xp).name}
               </span>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1.5 relative z-10">
               <div className="flex justify-between items-end">
-                <span className="text-[10px] text-slate-500 font-bold">XP: {userData.xp}</span>
-                <span className="text-[8px] text-purple-400 font-black uppercase tracking-widest">Mastery</span>
+                <span className="text-[9px] text-slate-500 font-black">XP: {userData.xp}</span>
+                <span className="text-[8px] text-purple-400 font-black uppercase tracking-widest">Neural Sync</span>
               </div>
-              <div className="w-full bg-black/40 rounded-full h-1.5 overflow-hidden border border-white/5">
+              <div className="w-full bg-black/40 rounded-full h-1 overflow-hidden border border-white/5">
                 <motion.div 
                    initial={{ width: 0 }}
                    animate={{ width: `${(userData.xp % 500) / 5}%` }}
@@ -118,7 +112,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
       </div>
 
-      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-4 space-y-0.5 overflow-y-auto custom-scrollbar">
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
@@ -128,26 +122,32 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               key={link.name}
               href={link.href}
               onClick={() => { if(window.innerWidth < 768) onClose(); }}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+              className={`flex items-center space-x-3 px-4 py-2.5 rounded-xl transition-all duration-300 relative group ${
                 isActive
                   ? "bg-white/5 border border-white/10 aura-text shadow-lg"
                   : "text-slate-400 hover:text-white hover:bg-white/5"
               }`}
             >
-              <Icon size={16} className={isActive ? "text-purple-400" : "text-slate-500"} />
-              <span className={`text-[11px] font-black uppercase tracking-[0.15em] ${isActive ? 'aura-text' : ''}`}>{link.name}</span>
+              {isActive && (
+                <motion.div 
+                   layoutId="sidebar-active"
+                   className="absolute left-0 top-2 bottom-2 w-1 bg-purple-500 rounded-full shadow-[0_0_10px_#8b5cf6]"
+                />
+              )}
+              <Icon size={14} className={`${isActive ? "text-purple-400" : "text-slate-500"} transition-colors group-hover:text-purple-400`} />
+              <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isActive ? 'aura-text' : ''}`}>{link.name}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="px-6 mt-auto">
+      <div className="px-6 mt-4 border-t border-white/5 pt-4">
         <button 
           onClick={handleLogout}
           className="flex items-center space-x-3 text-slate-500 hover:text-red-400 transition-colors w-full px-4 py-3 rounded-xl hover:bg-red-400/5 group"
         >
           <LogOut size={16} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="text-[10px] font-black uppercase tracking-widest">Logout</span>
+          <span className="text-[10px] font-black uppercase tracking-widest">Disconnect Link</span>
         </button>
       </div>
     </div>
@@ -155,12 +155,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Desktop Version */}
       <div className="hidden md:flex h-full">
         {sidebarContent}
       </div>
 
-      {/* Mobile Drawer */}
       <AnimatePresence>
         {isOpen && (
           <div className="fixed inset-0 z-[70] md:hidden">
