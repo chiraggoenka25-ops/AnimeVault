@@ -135,3 +135,28 @@ body {
   top: -50%;
   left: -50%;
 }
+
+/* v4.3 Neural Overdrive Extras */
+@keyframes neural-flicker {
+  0% { opacity: 0.1; }
+  5% { opacity: 0.2; }
+  10% { opacity: 0.1; }
+  100% { opacity: 0.1; }
+}
+
+.animate-flicker {
+  animation: neural-flicker 5s infinite;
+}
+
+@keyframes float-particle {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  20% { opacity: 0.4; }
+  80% { opacity: 0.4; }
+  100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+}
+
+.aura-particle {
+  position: absolute;
+  pointer-events: none;
+  animation: float-particle linear infinite;
+}
