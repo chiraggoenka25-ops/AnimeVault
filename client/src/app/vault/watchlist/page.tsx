@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ListVideo, X, Star } from "lucide-react";
+import { ListVideo, X, Star, Plus, Minus, CheckCircle } from "lucide-react";
 import { apiClient } from "@/lib/api";
+import AnimeSearch from "@/components/AnimeSearch";
 
 type WatchItem = {
   id: string;
@@ -11,6 +12,8 @@ type WatchItem = {
   cover_image: string;
   status: string;
   rating: number;
+  episodes_watched: number;
+  total_episodes: number;
 };
 
 export default function WatchlistPage() {
@@ -23,6 +26,8 @@ export default function WatchlistPage() {
   const [coverUrl, setCoverUrl] = useState("");
   const [status, setStatus] = useState("Plan to Watch");
   const [rating, setRating] = useState(0);
+  const [episodesWatched, setEpisodesWatched] = useState(0);
+  const [totalEpisodes, setTotalEpisodes] = useState(0);
 
   useEffect(() => {
     fetchWatchlist();
@@ -47,15 +52,37 @@ export default function WatchlistPage() {
         anime_title: title, 
         cover_image: coverUrl || "https://images.unsplash.com/photo-1541562232579-512a21360020?q=80&w=600&auto=format&fit=crop", 
         status, 
-        rating 
+        rating,
+        episodes_watched: episodesWatched,
+        total_episodes: totalEpisodes
       });
       setShowModal(false);
       setTitle(""); setCoverUrl(""); setRating(0);
+      setEpisodesWatched(0); setTotalEpisodes(0);
       fetchWatchlist();
     } catch (err) {
       console.error(err);
     } finally {
       setAdding(false);
+    }
+  };
+
+  const handleUpdateProgress = async (id: string, current: number, total: number) => {
+    if (total > 0 && current >= total) return;
+    try {
+      const newCount = current + 1;
+      const newStatus = total > 0 && newCount === total ? 'Completed' : 'Watching';
+      
+      await apiClient.put(`/vault/watchlist/${id}`, { 
+        episodes_watched: newCount,
+        status: newStatus
+      });
+      
+      setItems(prev => prev.map(item => 
+        item.id === id ? { ...item, episodes_watched: newCount, status: newStatus } : item
+      ));
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -83,25 +110,63 @@ export default function WatchlistPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {items.map((item, idx) => (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.05 }}
-              key={item.id} className="glass-panel overflow-hidden rounded-xl group relative border-pink-500/10"
-            >
-              <div className="h-64 overflow-hidden relative">
-                <img src={item.cover_image} alt={item.anime_title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/40 to-transparent flex items-end p-4">
-                  <h3 className="font-bold text-white shadow-black drop-shadow-md">{item.anime_title}</h3>
+          {items.map((item, idx) => {
+            const progress = item.total_episodes > 0 
+              ? (item.episodes_watched / item.total_episodes) * 100 
+              : 0;
+
+            return (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.05 }}
+                key={item.id} className="glass-panel overflow-hidden rounded-xl group relative border-white/5"
+              >
+                <div className="h-64 overflow-hidden relative">
+                  <img src={item.cover_image} alt={item.anime_title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/40 to-transparent flex flex-col justify-end p-4">
+                    <h3 className="font-bold text-white shadow-black drop-shadow-md text-sm">{item.anime_title}</h3>
+                    
+                    {/* Progress Bar Container */}
+                    <div className="mt-3 space-y-1.5">
+                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-300">
+                        <span>{item.episodes_watched} / {item.total_episodes || '?'} EPS</span>
+                        <span>{Math.round(progress)}%</span>
+                      </div>
+                      <div className="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progress}%` }}
+                          className="bg-gradient-to-r from-pink-500 to-purple-500 h-full rounded-full shadow-[0_0_8px_rgba(236,72,153,0.5)]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Increment Overlay */}
+                  <button 
+                    onClick={() => handleUpdateProgress(item.id, item.episodes_watched, item.total_episodes)}
+                    className="absolute top-2 right-2 bg-pink-500 hover:bg-pink-400 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg"
+                  >
+                    <Plus size={16} />
+                  </button>
                 </div>
-              </div>
-              <div className="p-3 bg-white/5 flex justify-between items-center text-xs">
-                <span className={`px-2 py-1 rounded bg-white/10 ${item.status === 'Completed' ? 'text-emerald-400' : 'text-pink-400'}`}>
-                  {item.status}
-                </span>
-                <span className="flex items-center text-yellow-400"><Star size={12} className="mr-1 fill-yellow-400" /> {item.rating}/10</span>
-              </div>
-            </motion.div>
-          ))}
+
+                <div className="p-3 bg-white/5 flex justify-between items-center text-[10px]">
+                  <div className="flex items-center">
+                    {item.status === 'Completed' ? (
+                      <span className="flex items-center text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
+                        <CheckCircle size={10} className="mr-1" /> COMPLETED
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 uppercase tracking-widest font-bold">
+                        {item.status}
+                      </span>
+                    )}
+                  </div>
+                  <span className="flex items-center text-yellow-400 font-black"><Star size={12} className="mr-1 fill-yellow-400" /> {item.rating}/10</span>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
@@ -112,13 +177,57 @@ export default function WatchlistPage() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full max-w-md glass-panel border border-pink-500/30 rounded-2xl relative z-10 p-6">
               <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-slate-400"><X size={20} /></button>
-              <h2 className="text-2xl font-bold mb-6 text-pink-400">Add to Watchlist</h2>
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-tighter">1. Search to Auto-Fill</label>
+                <AnimeSearch onSelect={(anime) => {
+                  setTitle(anime.title);
+                  setCoverUrl(anime.coverImage);
+                  setTotalEpisodes(anime.totalEpisodes);
+                  setStatus(anime.totalEpisodes > 0 ? "Watching" : "Plan to Watch");
+                }} />
+              </div>
+
+              <div className="flex items-center gap-4 mb-6">
+                <div className="h-px bg-white/10 flex-1" />
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Or Manual entry</span>
+                <div className="h-px bg-white/10 flex-1" />
+              </div>
+
               <form onSubmit={handleAdd} className="space-y-4">
-                <div><label className="block text-sm text-slate-300 mb-1">Anime Title</label><input type="text" required value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-slate-200" /></div>
-                <div><label className="block text-sm text-slate-300 mb-1">Cover Image URL (Optional)</label><input type="url" value={coverUrl} onChange={e => setCoverUrl(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-slate-200 text-sm" placeholder="https://..." /></div>
-                <div><label className="block text-sm text-slate-300 mb-1">Status</label><select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-slate-200"><option>Plan to Watch</option><option>Watching</option><option>Completed</option><option>Dropped</option></select></div>
-                <div><label className="block text-sm text-slate-300 mb-1">Rating (Out of 10)</label><input type="number" min="0" max="10" value={rating === 0 ? "" : rating} onChange={e => setRating(parseInt(e.target.value) || 0)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-slate-200" /></div>
-                <button type="submit" disabled={adding} className="w-full bg-pink-600 text-white font-bold py-3 rounded-lg">{adding ? "Saving..." : "Save Anime"}</button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="block text-xs font-bold text-slate-400 mb-1 uppercase">Title</label>
+                    <input type="text" required value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-pink-500/50" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-bold text-slate-400 mb-1 uppercase">Cover Image</label>
+                    <input type="url" value={coverUrl} onChange={e => setCoverUrl(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-slate-200 text-xs focus:outline-none focus:border-pink-500/50" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1 uppercase">Status</label>
+                    <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-slate-200 text-sm focus:outline-none focus:border-pink-500/50">
+                      <option>Plan to Watch</option>
+                      <option>Watching</option>
+                      <option>Completed</option>
+                      <option>Dropped</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1 uppercase">Rating / 10</label>
+                    <input type="number" min="0" max="10" value={rating === 0 ? "" : rating} onChange={e => setRating(parseInt(e.target.value) || 0)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-pink-500/50" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1 uppercase">Watched</label>
+                    <input type="number" min="0" value={episodesWatched} onChange={e => setEpisodesWatched(parseInt(e.target.value) || 0)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-pink-500/50" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 mb-1 uppercase">Total</label>
+                    <input type="number" min="0" value={totalEpisodes} onChange={e => setTotalEpisodes(parseInt(e.target.value) || 0)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-pink-500/50" />
+                  </div>
+                </div>
+                <button type="submit" disabled={adding} className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold py-3.5 rounded-xl shadow-lg hover:shadow-pink-500/20 transition-all mt-4">
+                  {adding ? "Initializing..." : "Add to Vault"}
+                </button>
               </form>
             </motion.div>
           </div>

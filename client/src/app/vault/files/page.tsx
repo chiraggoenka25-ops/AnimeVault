@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FolderOpen, UploadCloud, Search, FileText, Image as ImageIcon, Film, HardDrive, MoreVertical, X } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { apiClient } from "@/lib/api";
+import VideoPlayer from "@/components/VideoPlayer";
 
 type VaultFile = {
   id: string;
@@ -13,6 +14,7 @@ type VaultFile = {
   date: string;
   icon: any;
   color: string;
+  url: string;
 };
 
 export default function VaultFilesPage() {
@@ -20,6 +22,7 @@ export default function VaultFilesPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [activeVideo, setActiveVideo] = useState<{ url: string; title: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -37,6 +40,7 @@ export default function VaultFilesPage() {
         date: new Date(f.created_at).toLocaleDateString(),
         icon: f.file_type.includes('video') ? Film : f.file_type.includes('image') ? ImageIcon : FileText,
         color: f.file_type.includes('video') ? "text-purple-400" : f.file_type.includes('image') ? "text-pink-400" : "text-blue-400",
+        url: f.file_url
       }));
       setFiles(formatted);
     } catch (err) {
@@ -145,6 +149,13 @@ export default function VaultFilesPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
                 key={file.id} 
+                onClick={() => {
+                  if (file.type.includes('video')) {
+                    setActiveVideo({ url: file.url, title: file.name });
+                  } else {
+                    window.open(file.url, '_blank');
+                  }
+                }}
                 className="grid grid-cols-12 gap-4 place-items-center p-3 hover:bg-white/5 rounded-lg transition-colors cursor-pointer group border-b border-white/5 last:border-0"
               >
                 <div className="col-span-6 place-self-start flex items-center w-full truncate pr-4">
@@ -165,6 +176,16 @@ export default function VaultFilesPage() {
           })}
         </div>
       </div>
+
+      <AnimatePresence>
+        {activeVideo && (
+          <VideoPlayer 
+            url={activeVideo.url} 
+            title={activeVideo.title} 
+            onClose={() => setActiveVideo(null)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

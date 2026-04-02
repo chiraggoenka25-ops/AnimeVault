@@ -17,6 +17,8 @@ CREATE TABLE public.users (
     id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
     username TEXT UNIQUE,
     avatar_url TEXT,
+    banner_url TEXT,
+    xp INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -50,6 +52,8 @@ CREATE TABLE public.watchlist (
     cover_image TEXT,
     status TEXT DEFAULT 'Plan to Watch',
     rating INTEGER CHECK (rating >= 0 AND rating <= 10),
+    episodes_watched INTEGER DEFAULT 0,
+    total_episodes INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -145,3 +149,19 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- GAMIFICATION: Grant XP on Community Post
+CREATE OR REPLACE FUNCTION public.grant_post_xp()
+RETURNS trigger AS $$
+BEGIN
+  UPDATE public.users 
+  SET xp = xp + 50 
+  WHERE id = NEW.user_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_community_post_created
+  AFTER INSERT ON public.posts
+  FOR EACH ROW EXECUTE PROCEDURE public.grant_post_xp();
+

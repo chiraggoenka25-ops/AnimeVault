@@ -1,7 +1,8 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, ThumbsUp, ThumbsDown, Share2, Flame, Clock, Tag, X } from "lucide-react";
+import { MessageSquare, ThumbsUp, ThumbsDown, Share2, Flame, Clock, Tag, X, Check, Copy } from "lucide-react";
+import { toast, Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
@@ -82,6 +83,30 @@ export default function CommunityPage() {
     }
   };
 
+  const handleVote = async (postId: string, voteType: number) => {
+    try {
+      // Optimistic Update
+      setPosts(prev => prev.map(p => 
+        p.id === postId ? { ...p, upvotes: p.upvotes + voteType } : p
+      ));
+      
+      await apiClient.post('/community/vote', { post_id: postId, vote_type: voteType });
+    } catch (err) {
+      console.error(err);
+      // Revert on error
+      fetchPosts();
+    }
+  };
+
+  const handleShare = (postId: string) => {
+    const url = `${window.location.origin}/community#${postId}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard!", {
+      style: { background: '#0D0D15', color: '#fff', border: '1px solid #10b981' },
+      icon: <Check className="text-emerald-400" />
+    });
+  };
+
   return (
     <div className="p-8 max-w-5xl mx-auto flex gap-8 h-full relative">
       <div className="flex-1 overflow-y-auto pr-4 pb-20">
@@ -125,13 +150,19 @@ export default function CommunityPage() {
                 className="glass-panel p-0 rounded-xl overflow-hidden hover:border-emerald-500/30 transition-colors"
               >
                 <div className="flex">
-                  <div className="bg-black/20 w-12 flex flex-col items-center py-4 border-r border-white/5 shrink-0">
-                    <button className="text-slate-400 hover:text-emerald-400 transition-colors p-1">
-                      <ThumbsUp size={20} />
+                  <div className="bg-black/20 w-14 flex flex-col items-center py-6 border-r border-white/5 shrink-0">
+                    <button 
+                      onClick={() => handleVote(post.id, 1)}
+                      className="text-slate-500 hover:text-emerald-400 hover:scale-125 active:scale-95 transition-all p-1"
+                    >
+                      <ThumbsUp size={22} className={post.upvotes > 0 ? "fill-emerald-400/20 text-emerald-400" : ""} />
                     </button>
-                    <span className="font-bold py-2 text-sm">{post.upvotes}</span>
-                    <button className="text-slate-400 hover:text-red-400 transition-colors p-1">
-                      <ThumbsDown size={20} />
+                    <span className="font-black py-3 text-lg text-white tabular-nums">{post.upvotes}</span>
+                    <button 
+                      onClick={() => handleVote(post.id, -1)}
+                      className="text-slate-500 hover:text-red-400 hover:scale-125 active:scale-95 transition-all p-1"
+                    >
+                      <ThumbsDown size={22} />
                     </button>
                   </div>
                   
@@ -153,9 +184,15 @@ export default function CommunityPage() {
                     
                     <p className="text-slate-300 mb-4">{post.description}</p>
                     
-                    <div className="flex items-center text-slate-400 text-sm gap-6">
-                      <button className="flex items-center hover:text-emerald-400 transition-colors">
-                        <MessageSquare size={18} className="mr-2" /> {post.comments} Comments
+                    <div className="flex items-center text-slate-500 text-xs font-bold uppercase tracking-widest gap-8 mt-2">
+                      <button className="flex items-center hover:text-emerald-400 transition-colors gap-2">
+                        <MessageSquare size={16} /> {post.comments} Discussions
+                      </button>
+                      <button 
+                        onClick={() => handleShare(post.id)}
+                        className="flex items-center hover:text-blue-400 transition-colors gap-2"
+                      >
+                        <Share2 size={16} /> Share Link
                       </button>
                     </div>
                   </div>
@@ -240,7 +277,7 @@ export default function CommunityPage() {
           </div>
         )}
       </AnimatePresence>
-
+      <Toaster position="bottom-right" />
     </div>
   );
 }

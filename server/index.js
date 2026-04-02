@@ -25,11 +25,13 @@ const authRoutes = require('./routes/auth');
 const vaultRoutes = require('./routes/vault');
 const communityRoutes = require('./routes/community');
 const profileRoutes = require('./routes/profile');
+const aiRoutes = require('./routes/ai');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/vault', vaultRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Start Server
 app.listen(port, () => {

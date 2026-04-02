@@ -100,7 +100,7 @@ router.get('/watchlist', verifyAuth, async (req, res) => {
 
 router.post('/watchlist', verifyAuth, async (req, res) => {
     try {
-        const { anime_title, cover_image, status, rating } = req.body;
+        const { anime_title, cover_image, status, rating, episodes_watched, total_episodes } = req.body;
         const { data, error } = await supabase
             .from('watchlist')
             .insert([{
@@ -108,12 +108,34 @@ router.post('/watchlist', verifyAuth, async (req, res) => {
                 anime_title,
                 cover_image,
                 status,
-                rating
+                rating,
+                episodes_watched: episodes_watched || 0,
+                total_episodes: total_episodes || 0
             }])
             .select();
 
         if (error) throw error;
         res.status(201).json({ data });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Vault - Update watchlist item (progress tracking)
+router.put('/watchlist/:id', verifyAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        
+        const { data, error } = await supabase
+            .from('watchlist')
+            .update(updates)
+            .eq('id', id)
+            .eq('user_id', req.user.id)
+            .select();
+
+        if (error) throw error;
+        res.json({ data });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
