@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Search, Sparkles, Moon, Sun, Menu, ShieldCheck, Zap, X, Infinity as InfinityIcon, Activity } from "lucide-react";
+import { Bell, Search, Sparkles, Moon, Sun, Menu, ShieldCheck, Zap, X, Infinity as InfinityIcon, Activity, Cpu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import ThemeSwitcher from "./ThemeSwitcher";
@@ -23,7 +23,7 @@ export default function TopBar({ onMenuClick, isSidebarOpen }: TopBarProps) {
       }
     });
 
-    const channel = supabase.channel('topbar_v4_3')
+    const channel = supabase.channel('topbar_v4_4')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users' }, (payload) => {
         setUserData(payload.new);
       })
@@ -36,7 +36,7 @@ export default function TopBar({ onMenuClick, isSidebarOpen }: TopBarProps) {
   const masteryLevel = Math.floor(currentXP / 500) + 1;
 
   return (
-    <header className="h-16 glass-panel border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-6 sticky top-0 z-50 shadow-2xl transition-all duration-500 bg-white/70 dark:bg-black/70 backdrop-blur-3xl">
+    <header className="h-16 glass-panel border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-6 sticky top-0 z-50 shadow-2xl transition-all duration-500 bg-white/80 dark:bg-black/90 backdrop-blur-3xl">
       <div className="flex items-center gap-4">
         <button onClick={onMenuClick} className="md:hidden p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 transition-colors">
            {isSidebarOpen ? <X size={20} className="text-purple-500" /> : <Menu size={20} />}
@@ -52,19 +52,19 @@ export default function TopBar({ onMenuClick, isSidebarOpen }: TopBarProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* v4.3 NEURAL ALIGNED Badge */}
+        {/* v4.4 NEURAL SYNERGY Badge */}
         <motion.div 
            whileHover={{ scale: 1.05 }}
-           className="hidden lg:flex items-center gap-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-cyan-500/20 relative overflow-hidden group shadow-[0_0_20px_rgba(6,182,212,0.15)]"
+           className="hidden lg:flex items-center gap-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-600/10 to-amber-500/10 border border-purple-500/20 relative overflow-hidden group shadow-[0_0_25px_rgba(245,158,11,0.1)]"
         >
-           <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/10 to-transparent animate-pulse" />
+           <div className="absolute inset-0 bg-gradient-to-r from-amber-400/10 to-transparent animate-pulse" />
            <div className="flex items-center gap-2 relative z-10">
-              <div className="p-1 bg-cyan-500/20 rounded-md">
-                 <Activity size={12} className="text-cyan-500 animate-pulse" />
+              <div className="p-1 bg-amber-500/20 rounded-md">
+                 <Cpu size={12} className="text-amber-500 animate-spin-slow" />
               </div>
               <div className="flex flex-col">
-                 <span className="text-[7px] font-black uppercase tracking-[0.3em] text-cyan-600 dark:text-cyan-400">Neural Sync Alignment</span>
-                 <span className="text-[9px] font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-purple-500 uppercase tracking-widest">v4.3 NEURAL ALIGNED</span>
+                 <span className="text-[7px] font-black uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">Contextual Synergy Active</span>
+                 <span className="text-[9px] font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500 uppercase tracking-widest">v4.4 NEURAL SYNERGY</span>
               </div>
            </div>
         </motion.div>
@@ -84,13 +84,13 @@ export default function TopBar({ onMenuClick, isSidebarOpen }: TopBarProps) {
                 <div className="relative group cursor-pointer">
                   <img 
                     src={userData.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.username}`} 
-                    className="w-10 h-10 rounded-xl object-cover border-2 border-purple-500/50 shadow-xl group-hover:scale-105 group-hover:border-purple-500 transition-all duration-300"
+                    className="w-10 h-10 rounded-xl object-cover border-2 border-amber-500/50 shadow-xl group-hover:scale-105 group-hover:border-amber-500 transition-all duration-300"
                   />
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white dark:border-dark-bg rounded-full shadow-lg" />
                 </div>
                 <div className="hidden xl:flex flex-col">
                    <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-tighter line-clamp-1">{userData.username}</p>
-                   <p className="text-[8px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest">Neuromancer Lv. {masteryLevel}</p>
+                   <p className="text-[8px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-widest italic">Neuromancer Mastery {masteryLevel}</p>
                 </div>
              </div>
            )}

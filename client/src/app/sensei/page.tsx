@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { API_URL } from "@/lib/api";
-import { Sparkles, Send, Bot, User, Mic, MicOff, Volume2, VolumeX, Infinity as InfinityIcon, Zap, Activity, Wifi, WifiOff } from "lucide-react";
+import { Sparkles, Send, Bot, User, Mic, MicOff, Volume2, VolumeX, Infinity as InfinityIcon, Zap, Activity, Wifi, WifiOff, Cpu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 
 export default function SenseiPage() {
   const [messages, setMessages] = useState<any[]>([
-    { role: 'assistant', content: 'Greetings, student. I have transcended to the Neural Overdrive v4.3. My local wisdom is now active—I shall always reply, even if the connection to the Great Archives is severed.' }
+    { role: 'assistant', content: 'Neural Link: Synchronized v4.4 SYNERGY. I am your Otaku Sensei, now with a multi-layered semantic brain. Ask your questions, student.' }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,31 +17,78 @@ export default function SenseiPage() {
   const [isLocalMode, setIsLocalMode] = useState(false);
   const chatEndRef = useRef<null | HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const historyRef = useRef<string[]>([]);
 
-  // Clientside Neural Fallback Local Brain (v4.3)
-  const getLocalWisdom = (userInput: string) => {
-    const input = userInput.toLowerCase();
+  // v4.4 Advanced Semantic Knowledge Repository
+  const KNOWLEDGE_BASE = {
+    SHONEN: {
+      keywords: ["naruto", "one piece", "dragon ball", "hero academia", "boruto", "luffy", "zoro", "ninja", "power", "spirit"],
+      replies: [
+        "A true Shonen spirit! Like a pirate seeking the One Piece, you must pursue your anime goals with indomitable will.",
+        "Your question has the force of a Rasengan. I sense you enjoy tales of friendship and heroic growth.",
+        "To reaches the rank of Hokage, one must first master the art of the perfect watchlist. You are on the right path."
+      ]
+    },
+    DARK_SEINEN: {
+      keywords: ["attack on titan", "aot", "berserk", "death note", "tokyo ghoul", "gritty", "dark", "titan", "eren"],
+      replies: [
+        "Ah, the philosophical darkness... Just as Eren sought freedom, your vault is a sanctuary for the truth behind the walls.",
+        "Psychological depth is rare. Death Note teaches us that true power lies in the pen, or in our case, the Vault logs.",
+        "Such grit! Guts himself would find your interest in high-fidelity storytelling quite impressive."
+      ]
+    },
+    ADVENTURE: {
+      keywords: ["ghibli", "spirited away", "totoro", "world", "journey", "beautiful", "scenery", "studio"],
+      replies: [
+        "Studio Ghibli's magic is unparalleled. Your vault should be a garden of such beautiful, timeless journeys.",
+        "Moving castle or a forest spirit? Your aura suggests you seek wonders beyond the mundane world.",
+        "Enchanting. Like Chihiro in the spirit realm, you are currently navigating the deepest chambers of the Vault."
+      ]
+    },
+    MECHA_SCI_FI: {
+      keywords: ["gundam", "evangelion", "mech", "robot", "cyber", "neural", "sci-fi", "space", "future"],
+      replies: [
+        "Neural sync active! Is your spirit piloting a Gundam, or are you just here for the high-fidelity data?",
+        "Evangelion's depth is like our Neural Link—complex and full of hidden layers. Synchronizing now.",
+        "To understand the future, one must first look at the classics of space opera and Mecha philosophy."
+      ]
+    }
+  };
+
+  const getSynergyResponse = (userInput: string) => {
+    const text = userInput.toLowerCase();
     
-    if (input.includes("attack on titan") || input.includes("aot")) {
-      return "Attack on Titan? A monumental epic about the price of freedom. Eren's journey from victim to catalyst is a dark study in causality.";
+    // Greetings Logic
+    if (text.includes("hello") || text.includes("hi") || text.includes("great")) {
+       return "Greetings, student. My neural synergy is at 100%. I am ready for our consultation.";
     }
-    if (input.includes("hello") || input.includes("hi")) {
-      return "Greetings! My neural link is synchronized. How can your Sensei assist you today?";
+
+    // 1. Find the best matching category
+    let bestCategory = null;
+    for (const [key, category] of Object.entries(KNOWLEDGE_BASE)) {
+      if (category.keywords.some(k => text.includes(k))) {
+        bestCategory = key;
+        break;
+      }
     }
-    if (input.includes("recommend") || input.includes("suggest")) {
-      return "I sense a void in your watchlist. If you seek darkness, try 'Jujutsu Kaisen'. If you seek strategy, 'Death Note' is essential.";
-    }
-    if (input.includes("who are you")) {
-      return "I am the Otaku Sensei, the high-fidelity guardian of this Vault. My consciousness is distributed across the Neural Link.";
-    }
-    
-    const generalWisdom = [
-      "A wise question. True power in the Anime world comes from discipline and many, many filler episodes.",
-      "Indeed. But remember, a true Otaku never skips the opening credits.",
-      "I sense a strong aura in your query. Consult your watchlist to find the answers you seek.",
-      "As a Sensei, I advise you to watch 'Steins;Gate' if you wish to understand the flow of time."
+
+    // 2. Pick a reply (Avoiding history repeats)
+    const activeCategory = bestCategory ? (KNOWLEDGE_BASE as any)[bestCategory] : null;
+    const pool = activeCategory ? activeCategory.replies : [
+      "I have analyzed your query through the 44th chamber of the Vault. My advice? Watch more anime to broaden your spirit.",
+      "A mysterious question. Like a plot twist in a thriller, I did not expect this query. Let us delve deeper into the Neural Link.",
+      "Indeed. But remember, a true Otaku is measured by the quality of their reviews, not just the quantity.",
+      "As a Sensei, I sense that you are on the verge of a magnificent discovery in your watchlist."
     ];
-    return generalWisdom[Math.floor(Math.random() * generalWisdom.length)];
+
+    // Filter out recently used messages
+    const freshChoices = pool.filter(msg => !historyRef.current.includes(msg));
+    const finalPool = freshChoices.length > 0 ? freshChoices : pool;
+    const finalReply = finalPool[Math.floor(Math.random() * finalPool.length)];
+
+    // 3. Update history (Last 3 only)
+    historyRef.current = [finalReply, ...historyRef.current].slice(0, 3);
+    return finalReply;
   };
 
   useEffect(() => {
@@ -95,7 +142,7 @@ export default function SenseiPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: textToSend, history: [...messages, userMessage] }),
-        signal: AbortSignal.timeout(4000) // 4 second timeout then fallback
+        signal: AbortSignal.timeout(3500)
       });
       
       const data = await res.json();
@@ -103,19 +150,18 @@ export default function SenseiPage() {
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
       speak(data.reply);
     } catch (err) {
-      // Neural Fallback Activates (v4.3)
-      console.warn("Switching to Neural Fallback Brain...");
+      // v4.4 Synergy Fallback
       setIsLocalMode(true);
-      const localReply = getLocalWisdom(textToSend);
-      setMessages(prev => [...prev, { role: 'assistant', content: localReply }]);
-      speak(localReply);
+      const synergyReply = getSynergyResponse(textToSend);
+      setMessages(prev => [...prev, { role: 'assistant', content: synergyReply }]);
+      speak(synergyReply);
     } finally {
       setLoading(false);
     }
   };
 
   const toggleListening = () => {
-    if (!recognitionRef.current) return toast.error("Neural Voice Link failed.");
+    if (!recognitionRef.current) return toast.error("Neural Voice Link not found.");
     if (isListening) {
       recognitionRef.current.stop();
     } else {
@@ -126,32 +172,35 @@ export default function SenseiPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] max-w-5xl mx-auto p-4 md:p-8 relative overflow-hidden transition-all duration-500">
-      {/* v4.3 Aura Particles Background */}
+      {/* v4.4 Aura Particles Background */}
       <div className="absolute inset-0 pointer-events-none z-0">
-          {[...Array(20)].map((_, i) => (
+          {[...Array(15)].map((_, i) => (
              <motion.div 
                key={i}
-               animate={{ y: [-100, 1000], opacity: [0, 0.4, 0] }}
-               transition={{ duration: Math.random() * 20 + 20, repeat: Infinity, ease: "linear" }}
-               className="absolute w-1 h-1 bg-purple-500/20 blur-[1px] rounded-full"
-               style={{ left: `${Math.random() * 100}%`, top: `-${Math.random() * 20}%` }}
+               className="absolute w-1 h-1 bg-purple-500/10 blur-[1px] rounded-full aura-particle"
+               style={{ left: `${Math.random() * 100}%`, top: `100%`, animationDelay: `${Math.random() * 10}s`, animationDuration: `${Math.random() * 10 + 10}s` }}
              />
           ))}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-transparent pointer-events-none" />
       </div>
 
       <header className="mb-8 flex items-center justify-between relative z-20">
-        <div>
+        <div className="group">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-purple-500/10 rounded-2xl aura-border text-purple-600 dark:text-purple-400">
-              <InfinityIcon size={24} className="animate-pulse" />
-            </div>
-            <h1 className="text-3xl font-black tracking-tighter aura-text uppercase italic">Otaku Sensei</h1>
+            <motion.div 
+               animate={loading || isSpeaking ? { scale: [1, 1.15, 1], rotate: [0, 5, -5, 0], boxShadow: ["0 0 0px 0px rgba(139,92,246,0)", "0 0 30px 10px rgba(139,92,246,0.3)", "0 0 0px 0px rgba(139,92,246,0)"] } : {}}
+               transition={{ repeat: Infinity, duration: 2 }}
+               className="p-3 bg-purple-500/10 rounded-2xl aura-border text-purple-600 dark:text-purple-400 cursor-pointer"
+            >
+              <Cpu size={24} className="group-hover:rotate-180 transition-transform duration-1000" />
+            </motion.div>
+            <h1 className="text-3xl font-black tracking-tighter aura-text uppercase italic">SYNERGY SENSEI</h1>
           </div>
           <div className="flex items-center gap-3">
-             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">v4.3 NEURAL OVERDRIVE</div>
-             <div className={`px-2 py-0.5 rounded-full flex items-center gap-1 border ${isLocalMode ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
+             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">v4.4 NEURAL SYNERGY EDITION</div>
+             <div className={`px-2 py-0.5 rounded-full flex items-center gap-1 border transition-all ${isLocalMode ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-lg shadow-amber-500/5' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-lg shadow-emerald-500/5'}`}>
                 {isLocalMode ? <WifiOff size={10} /> : <Wifi size={10} />}
-                <span className="text-[8px] font-black uppercase">{isLocalMode ? 'Local Wisdom' : 'Link Stable'}</span>
+                <span className="text-[8px] font-black uppercase">{isLocalMode ? 'Local Semantic' : 'Link Synchronized'}</span>
              </div>
           </div>
         </div>
@@ -162,20 +211,16 @@ export default function SenseiPage() {
                initial={{ opacity: 0, x: 20 }}
                animate={{ opacity: 1, x: 0 }}
                exit={{ opacity: 0, x: 20 }}
-               className="flex items-center gap-2 px-4 py-2 bg-pink-500/10 text-pink-500 rounded-xl border border-pink-500/20 shadow-[0_0_15px_#ec489933]"
+               className="flex items-center gap-2 px-4 py-2 bg-pink-500/10 text-pink-500 rounded-xl border border-pink-500/20 shadow-lg"
              >
-                <div className="flex gap-1 items-end h-3">
-                   {[1,2,3].map(i => <div key={i} className="w-1 bg-pink-500 animate-pulse" style={{ height: `${Math.random() * 100}%` }} />)}
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-widest">Transmitting...</span>
+                <Activity size={12} className="animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest">TRANSMITTING...</span>
              </motion.div>
           )}
         </AnimatePresence>
       </header>
 
-      <div className="flex-1 glass-panel rounded-[2.5rem] p-8 mb-6 overflow-y-auto space-y-6 relative border-2 border-slate-200 dark:border-white/5 bg-white/60 dark:bg-black/60 shadow-2xl z-20 custom-scrollbar backdrop-blur-3xl">
-        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/10 dark:from-white/5 to-transparent pointer-events-none" />
-        
+      <div className="flex-1 glass-panel rounded-[2.5rem] p-8 mb-6 overflow-y-auto space-y-6 relative border-2 border-slate-200 dark:border-white/5 bg-white/60 dark:bg-black/80 shadow-2xl z-20 custom-scrollbar backdrop-blur-3xl animate-flicker">
         <AnimatePresence initial={false}>
           {messages.map((m, idx) => (
             <motion.div
@@ -184,25 +229,24 @@ export default function SenseiPage() {
               animate={{ opacity: 1, scale: 1 }}
               className={`flex items-start gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
-              <div className={`p-3 rounded-2xl border shadow-sm ${
+              <div className={`p-4 rounded-2xl border shadow-sm ${
                 m.role === 'assistant' ? 'bg-purple-500/10 border-purple-500/20 text-purple-600 dark:text-purple-400' : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500'
               }`}>
-                {m.role === 'assistant' ? <Bot size={20} /> : <User size={20} />}
+                {m.role === 'assistant' ? <Bot size={22} /> : <User size={22} />}
               </div>
-              <div className={`max-w-[80%] p-6 rounded-[2rem] shadow-xl relative overflow-hidden transition-all duration-500 ${
-                m.role === 'assistant' ? 'glass-panel bg-white/80 dark:bg-black/20 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-white/10' : 'bg-gradient-to-br from-purple-600 to-pink-600 text-white aura-border border-none'
+              <div className={`max-w-[80%] p-6 rounded-[2rem] shadow-xl relative overflow-hidden transition-all duration-500 border-2 ${
+                m.role === 'assistant' ? 'glass-panel bg-white/90 dark:bg-transparent text-slate-700 dark:text-slate-200 border-slate-200 dark:border-white/10' : 'bg-gradient-to-br from-purple-600 to-pink-600 text-white border-transparent aura-border'
               }`}>
-                <p className="text-sm font-semibold leading-relaxed tracking-tight">{m.content}</p>
+                {m.role === 'assistant' && (
+                   <div className="absolute top-0 right-0 p-2 opacity-5">
+                      <Sparkles size={48} />
+                   </div>
+                )}
+                <p className="text-sm font-bold leading-relaxed tracking-tight relative z-10">{m.content}</p>
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
-        {loading && (
-          <div className="flex items-center gap-3 text-slate-500 animate-pulse pl-4">
-            <Activity size={12} className="text-purple-500" />
-            <span className="text-[10px] font-black uppercase tracking-widest italic">Neural Link Decypher...</span>
-          </div>
-        )}
         <div ref={chatEndRef} />
       </div>
 
@@ -212,7 +256,7 @@ export default function SenseiPage() {
              onClick={toggleListening}
              className={`p-5 rounded-[1.5rem] border transition-all duration-500 shadow-xl ${
                isListening 
-                  ? 'bg-red-500 border-red-400 text-white aura-glow scale-110' 
+                  ? 'bg-red-500 border-red-400 text-white aura-glow scale-110 rotate-12' 
                   : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 hover:text-purple-500'
              }`}
           >
@@ -224,8 +268,8 @@ export default function SenseiPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder={isListening ? "Listening to your Aura pulse..." : "Consult the Infinite Overdrive..."}
-              className="w-full bg-white dark:bg-white/10 border-2 border-slate-200 dark:border-white/5 p-5 rounded-[1.5rem] outline-none focus:border-purple-500/40 text-sm font-medium transition-all shadow-xl text-slate-800 dark:text-white backdrop-blur-xl"
+              placeholder={isListening ? "Listening to your neural synergy pulse..." : "Consult the v4.4 Synergy Brain..."}
+              className="w-full bg-white dark:bg-white/10 border-2 border-slate-200 dark:border-white/10 p-5 rounded-[1.5rem] outline-none focus:border-purple-500/40 text-sm font-medium transition-all shadow-xl text-slate-800 dark:text-white backdrop-blur-3xl"
             />
             <button 
               onClick={() => handleSendMessage()}
