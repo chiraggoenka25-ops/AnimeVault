@@ -39,7 +39,7 @@ export default function CommunityPage() {
         comments: p.comments || 0,
         tags: p.tags || [],
       }));
-      setPosts(formattedPosts.sort((a, b) => b.rawTime.getTime() - a.rawTime.getTime()));
+      setPosts(formattedPosts.sort((a: Post, b: Post) => b.rawTime.getTime() - a.rawTime.getTime()));
     } catch (err) {
       console.error("Error fetching posts:", err);
     } finally {
