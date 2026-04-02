@@ -82,7 +82,7 @@ export default function SenseiPage() {
     ];
 
     // Filter out recently used messages
-    const freshChoices = pool.filter(msg => !historyRef.current.includes(msg));
+    const freshChoices = pool.filter((msg: string) => !historyRef.current.includes(msg));
     const finalPool = freshChoices.length > 0 ? freshChoices : pool;
     const finalReply = finalPool[Math.floor(Math.random() * finalPool.length)];
 
