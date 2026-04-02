@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Search, Sparkles, Moon, Sun, Menu, ShieldCheck, Zap, X, Infinity } from "lucide-react";
+import { Bell, Search, Sparkles, Moon, Sun, Menu, ShieldCheck, Zap, X, Infinity as InfinityIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import ThemeSwitcher from "./ThemeSwitcher";
@@ -57,7 +57,7 @@ export default function TopBar({ onMenuClick, isSidebarOpen }: TopBarProps) {
            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 animate-rotate-gradient opacity-0 group-hover:opacity-100 transition-opacity" />
            <div className="flex items-center gap-2 relative z-10">
               <div className="p-1 bg-yellow-500/20 rounded-md">
-                 <Infinity size={12} className="text-yellow-400" />
+                 <InfinityIcon size={12} className="text-yellow-400" />
               </div>
               <div className="flex flex-col">
                  <span className="text-[7px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Production Neural Link</span>

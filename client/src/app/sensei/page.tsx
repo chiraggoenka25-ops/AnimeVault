@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { API_URL } from "@/lib/api";
-import { Sparkles, Send, Bot, User, Mic, MicOff, Volume2, VolumeX, Infinity, Zap } from "lucide-react";
+import { Sparkles, Send, Bot, User, Mic, MicOff, Volume2, VolumeX, Infinity as InfinityIcon, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 
@@ -102,7 +102,7 @@ export default function SenseiPage() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-3 bg-purple-500/10 rounded-2xl aura-border text-purple-600 dark:text-purple-400">
-              <Infinity size={24} className="animate-pulse" />
+              <InfinityIcon size={24} className="animate-pulse" />
             </div>
             <h1 className="text-3xl font-black tracking-tighter aura-text uppercase italic">Otaku Sensei</h1>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FolderOpen, ListVideo, PenTool, Users, ArrowRight, Zap, Target, Sparkles, Infinity } from "lucide-react";
+import { FolderOpen, ListVideo, PenTool, Users, ArrowRight, Zap, Target, Sparkles, Infinity as InfinityIcon } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -38,7 +38,7 @@ export default function Home() {
             className="flex items-center gap-3 mb-4"
           >
              <div className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] font-black uppercase tracking-widest text-purple-600 dark:text-purple-400">
-                <span className="flex items-center gap-1.5"><Infinity size={10} /> Neural Link: Synchronized v4.2</span>
+                <span className="flex items-center gap-1.5"><InfinityIcon size={10} /> Neural Link: Synchronized v4.2</span>
              </div>
           </motion.div>
           <motion.h1 

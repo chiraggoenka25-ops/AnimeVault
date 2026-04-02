@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Home, FolderOpen, ListVideo, PenTool, Users, MessageSquare, User, LogOut, ShieldCheck, Sparkles, Zap, X, Calendar, BarChart3, Award, MessageCircle, Infinity } from "lucide-react";
+import { Home, FolderOpen, ListVideo, PenTool, Users, MessageSquare, User, LogOut, ShieldCheck, Sparkles, Zap, X, Calendar, BarChart3, Award, MessageCircle, Infinity as InfinityIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface SidebarProps {
@@ -90,7 +90,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center justify-between mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 relative z-10">
             <span className="flex items-center gap-1.5 ">
-              <Infinity size={11} className="text-purple-400" /> Mastery
+              <InfinityIcon size={11} className="text-purple-400" /> Mastery
             </span>
             <span className={`px-2 py-0.5 rounded border ${rankInfo.bg} ${rankInfo.color} ${rankInfo.border} ${rankInfo.glow} animate-pulse`}>
               {rankInfo.name}
