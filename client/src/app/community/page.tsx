@@ -1,7 +1,8 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, ThumbsUp, ThumbsDown, Share2, Flame, Clock, Tag, X, Check, Copy } from "lucide-react";
+import { MessageSquare, ThumbsUp, ThumbsDown, Share2, Flame, Clock, Tag, X, Check, Copy, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { toast, Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
@@ -166,14 +167,20 @@ export default function CommunityPage() {
                     </button>
                   </div>
                   
-                  <div className="p-5 flex-1 cursor-pointer">
-                    <div className="flex items-center text-xs text-slate-400 mb-2">
-                      <span className="font-semibold text-slate-300">@{post.author}</span>
-                      <span className="mx-2">•</span>
-                      <span>{post.time}</span>
+                  <Link 
+                    href={`/community/${post.id}`}
+                    className="p-5 flex-1 cursor-pointer group/card"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                       <div className="flex items-center text-xs text-slate-400">
+                          <span className="font-semibold text-slate-300 group-hover/card:text-purple-400 transition-colors">@{post.author}</span>
+                          <span className="mx-2">•</span>
+                          <span>{post.time}</span>
+                       </div>
+                       <ExternalLink size={14} className="opacity-0 group-hover/card:opacity-100 transition-opacity text-purple-400" />
                     </div>
                     
-                    <h3 className="text-xl font-bold mb-2 text-slate-100">{post.title}</h3>
+                    <h3 className="text-xl font-bold mb-2 text-slate-100 aura-text group-hover/card:translate-x-1 transition-transform">{post.title}</h3>
                     <div className="flex flex-wrap gap-2 mb-3">
                       {post.tags.map(tag => (
                         <span key={`${post.id}-${tag}`} className="flex items-center text-xs bg-white/5 border border-white/10 px-2 py-1 rounded text-slate-300">
@@ -184,18 +191,18 @@ export default function CommunityPage() {
                     
                     <p className="text-slate-300 mb-4">{post.description}</p>
                     
-                    <div className="flex items-center text-slate-500 text-xs font-bold uppercase tracking-widest gap-8 mt-2">
-                      <button className="flex items-center hover:text-emerald-400 transition-colors gap-2">
-                        <MessageSquare size={16} /> {post.comments} Discussions
-                      </button>
+                    <div className="flex items-center text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] gap-8 mt-4">
+                      <div className="flex items-center hover:text-emerald-400 transition-colors gap-2">
+                        <MessageSquare size={14} /> {post.comments} Conversations
+                      </div>
                       <button 
-                        onClick={() => handleShare(post.id)}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleShare(post.id); }}
                         className="flex items-center hover:text-blue-400 transition-colors gap-2"
                       >
-                        <Share2 size={16} /> Share Link
+                        <Share2 size={14} /> Secure Link
                       </button>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               </motion.div>
             ))}

@@ -1,0 +1,21 @@
+{
+  "name": "AnimeVault Elite",
+  "short_name": "AnimeVault",
+  "description": "Secure Personal Anime Media Platform & Community",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D0D15",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1541562232579-512a21360020?q=80&w=192&auto=format&fit=crop",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1541562232579-512a21360020?q=80&w=512&auto=format&fit=crop",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

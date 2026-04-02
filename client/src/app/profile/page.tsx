@@ -14,6 +14,7 @@ export default function ProfilePage() {
   const [editEmail, setEditEmail] = useState("");
   const [editAvatar, setEditAvatar] = useState("");
   const [editBanner, setEditBanner] = useState("");
+  const [aura, setAura] = useState("default");
   const [stats, setStats] = useState({ files: 0, watchlist: 0, characters: 0 });
   const [saving, setSaving] = useState(false);
 
@@ -46,12 +47,14 @@ export default function ProfilePage() {
         avatar_url: data?.avatar_url || "https://images.unsplash.com/photo-1541562232579-512a21360020?q=80&w=200&auto=format&fit=crop",
         banner_url: data?.banner_url || "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1200&auto=format&fit=crop",
         xp: data?.xp || 0,
+        aura_theme: data?.aura_theme || "default",
         created_at: new Date(data?.created_at || user.created_at).toLocaleDateString(),
       });
       setEditUsername(data?.username || "");
       setEditEmail(user.email || "");
       setEditAvatar(data?.avatar_url || "");
       setEditBanner(data?.banner_url || "");
+      setAura(data?.aura_theme || "default");
     } catch (err) { console.error(err); } finally { setLoading(false); }
   }
 
@@ -62,7 +65,8 @@ export default function ProfilePage() {
       await supabase.from("users").update({ 
         username: editUsername,
         avatar_url: editAvatar,
-        banner_url: editBanner
+        banner_url: editBanner,
+        aura_theme: aura
       }).eq("id", profile.id);
 
       if (editEmail !== profile.email) {
@@ -70,7 +74,7 @@ export default function ProfilePage() {
         if (error) alert("Email change requested! Check your current email AND new email for verification links.");
       }
       
-      setProfile({ ...profile, username: editUsername, email: editEmail, avatar_url: editAvatar, banner_url: editBanner });
+      setProfile({ ...profile, username: editUsername, email: editEmail, avatar_url: editAvatar, banner_url: editBanner, aura_theme: aura });
       setIsEditing(false);
     } catch (err) {
       console.error(err);
@@ -137,9 +141,37 @@ export default function ProfilePage() {
         </div>
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Aura Selector */}
+          <div className="p-6 bg-black/40 rounded-2xl border border-white/5">
+             <h3 className="text-lg font-bold text-white mb-6 flex items-center">
+              <Sparkles className="text-yellow-400 mr-3" size={20} /> 
+              Elite Aura Select
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+               {[
+                 { id: 'default', name: 'Original', color: 'bg-purple-600' },
+                 { id: 'naruto', name: 'Will of Fire', color: 'bg-orange-600' },
+                 { id: 'demon-slayer', name: 'Breathing Style', color: 'bg-emerald-600' },
+                 { id: 'cyberpunk', name: 'Night City', color: 'bg-yellow-400' },
+               ].map((t) => (
+                 <button 
+                  key={t.id}
+                  onClick={() => setAura(t.id)}
+                  className={`p-3 rounded-xl border transition-all text-xs font-bold uppercase tracking-widest flex items-center justify-between ${
+                    aura === t.id ? 'border-white bg-white/10 aura-text' : 'border-white/5 hover:bg-white/5 text-slate-500'
+                  }`}
+                 >
+                   {t.name}
+                   <div className={`w-2 h-2 rounded-full ${t.color}`} />
+                 </button>
+               ))}
+            </div>
+            <p className="text-[10px] text-slate-500 mt-4 italic">Auras dynamically transform your profile's energy and glow.</p>
+          </div>
+          
           <div className="p-6 bg-black/40 rounded-2xl border border-white/5 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-               <Sparkles size={100} className="text-purple-400" />
+               <ImageIcon size={100} className="text-purple-400" />
             </div>
             <h3 className="text-lg font-bold text-white mb-6 flex items-center">
               <User className="text-purple-400 mr-3 shadow-purple-500/50" size={20} /> 
@@ -160,9 +192,11 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-          
-          {/* Progression Card */}
-          <div className="p-6 bg-gradient-to-br from-purple-900/20 to-pink-900/10 rounded-2xl border border-purple-500/10">
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+           {/* Progression Card */}
+           <div className="p-6 bg-gradient-to-br from-purple-900/20 to-pink-900/10 rounded-2xl border border-purple-500/10">
              <h3 className="text-lg font-bold text-white mb-6 flex items-center">
               <Zap className="text-yellow-400 mr-3" size={20} /> 
               Rank Mastery

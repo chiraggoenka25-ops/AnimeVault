@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Home, FolderOpen, ListVideo, PenTool, Users, MessageSquare, User, LogOut, ShieldCheck, Sparkles, Zap } from "lucide-react";
-import { motion } from "framer-motion";
+import { Home, FolderOpen, ListVideo, PenTool, Users, MessageSquare, User, LogOut, ShieldCheck, Sparkles, Zap, Bell } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import NotificationsCenter from "./NotificationsCenter";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -76,9 +77,12 @@ export default function Sidebar() {
   return (
     <div className="w-64 h-full glass-panel border-r border-white/10 flex flex-col pt-8 pb-4 shrink-0 transition-opacity">
       <div className="px-6 mb-8">
-        <h1 className="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 neon-text-purple">
-          ANIME VAULT
-        </h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 aura-text">
+            ANIME VAULT
+          </h1>
+          <NotificationsCenter />
+        </div>
         
         {userData && (
           <motion.div 

@@ -90,7 +90,7 @@ export default function WatchlistPage() {
     <div className="p-8 h-full flex flex-col relative w-full">
       <header className="mb-8 flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-black mb-2 flex items-center text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500">
+          <h1 className="text-3xl font-black mb-2 flex items-center aura-text">
             <ListVideo className="text-pink-400 mr-3" size={32} />
             Watchlist
           </h1>

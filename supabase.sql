@@ -19,6 +19,7 @@ CREATE TABLE public.users (
     avatar_url TEXT,
     banner_url TEXT,
     xp INTEGER DEFAULT 0,
+    aura_theme TEXT DEFAULT 'default',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -146,22 +147,49 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+-- 9. Notifications Table
+CREATE TABLE public.notifications (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    link TEXT,
+    read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
--- GAMIFICATION: Grant XP on Community Post
-CREATE OR REPLACE FUNCTION public.grant_post_xp()
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own notifications" ON public.notifications FOR ALL USING (auth.uid() = user_id);
+
+-- Update on_community_post_created to also grant XP
+CREATE TRIGGER on_community_post_created
+  AFTER INSERT ON public.posts
+  FOR EACH ROW EXECUTE PROCEDURE public.grant_post_xp();
+
+-- NOTIFICATION TRIGGER: Like on post
+CREATE OR REPLACE FUNCTION public.notify_on_like()
 RETURNS trigger AS $$
 BEGIN
-  UPDATE public.users 
-  SET xp = xp + 50 
-  WHERE id = NEW.user_id;
+  IF NEW.vote_type = 1 THEN
+    INSERT INTO public.notifications (user_id, type, title, message, link)
+    SELECT 
+      p.user_id, 
+      'like', 
+      'New Like! 🔥', 
+      'Someone liked your post: ' || p.title, 
+      '/community#' || p.id
+    FROM public.posts p
+    WHERE p.id = NEW.post_id AND p.user_id != NEW.user_id;
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE TRIGGER on_community_post_created
-  AFTER INSERT ON public.posts
-  FOR EACH ROW EXECUTE PROCEDURE public.grant_post_xp();
+CREATE TRIGGER on_post_liked
+  AFTER INSERT OR UPDATE ON public.votes
+  FOR EACH ROW EXECUTE PROCEDURE public.notify_on_like();
+
+-- NOTIFICATION TRIGGER: Level Up (Rank change)
+-- (Simplified for demo)
 
