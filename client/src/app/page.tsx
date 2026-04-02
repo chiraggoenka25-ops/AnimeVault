@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { FolderOpen, ListVideo, PenTool, Users, ArrowRight, Zap, Target, Sparkles, Infinity as InfinityIcon, Activity, Globe, Cpu } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
