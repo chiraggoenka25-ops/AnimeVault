@@ -1,243 +1,185 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
-import { User, Mail, Calendar, Settings, Edit3, X, Save, AlertTriangle, Sparkles, Zap, Folder, List, Users as UsersIcon, Image as ImageIcon, ShieldCheck } from "lucide-react";
+import { User, Mail, Shield, Zap, Sparkles, Award, Star, Settings, Camera, LogOut, Activity, Cpu, Infinity as InfinityIcon, Target, Database } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<any>(null);
+  const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  
-  const [editUsername, setEditUsername] = useState("");
-  const [editEmail, setEditEmail] = useState("");
-  const [editAvatar, setEditAvatar] = useState("");
-  const [editBanner, setEditBanner] = useState("");
-  const [aura, setAura] = useState("default");
-  const [stats, setStats] = useState({ files: 0, watchlist: 0, characters: 0 });
-  const [saving, setSaving] = useState(false);
+  const coreRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { loadProfile(); }, []);
-
-  async function loadProfile() {
-    try {
+  useEffect(() => {
+    const fetchProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase.from("users").select("*").eq("id", user.id).single();
-      
-      // Fetch Stats
-      const [filesRes, watchRes, charRes] = await Promise.all([
-        supabase.from("anime_files").select("id", { count: "exact" }).eq("user_id", user.id),
-        supabase.from("watchlist").select("id", { count: "exact" }).eq("user_id", user.id),
-        supabase.from("characters").select("id", { count: "exact" }).eq("user_id", user.id),
-      ]);
-
-      setStats({
-        files: filesRes.count || 0,
-        watchlist: watchRes.count || 0,
-        characters: charRes.count || 0,
-      });
-
-      setProfile({
-        id: user.id,
-        username: data?.username || "Unknown",
-        email: user.email || "",
-        avatar_url: data?.avatar_url || "https://images.unsplash.com/photo-1541562232579-512a21360020?q=80&w=200&auto=format&fit=crop",
-        banner_url: data?.banner_url || "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1200&auto=format&fit=crop",
-        xp: data?.xp || 0,
-        aura_theme: data?.aura_theme || "default",
-        created_at: new Date(data?.created_at || user.created_at).toLocaleDateString(),
-      });
-      setEditUsername(data?.username || "");
-      setEditEmail(user.email || "");
-      setEditAvatar(data?.avatar_url || "");
-      setEditBanner(data?.banner_url || "");
-      setAura(data?.aura_theme || "default");
-    } catch (err) { console.error(err); } finally { setLoading(false); }
-  }
-
-  const handleSaveProfile = async () => {
-    if (!profile) return;
-    setSaving(true);
-    try {
-      await supabase.from("users").update({ 
-        username: editUsername,
-        avatar_url: editAvatar,
-        banner_url: editBanner,
-        aura_theme: aura
-      }).eq("id", profile.id);
-
-      if (editEmail !== profile.email) {
-        const { error } = await supabase.auth.updateUser({ email: editEmail });
-        if (error) alert("Email change requested! Check your current email AND new email for verification links.");
+      if (user) {
+        const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
+        setUserData(data);
       }
-      
-      setProfile({ ...profile, username: editUsername, email: editEmail, avatar_url: editAvatar, banner_url: editBanner, aura_theme: aura });
-      setIsEditing(false);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update profile.");
-    } finally {
-      setSaving(false);
-    }
+      setLoading(false);
+    };
+    fetchProfile();
+  }, []);
+
+  const getRank = (xp: number = 0) => {
+    if (xp >= 2000) return { name: "Hokage", color: "text-amber-500", bg: "bg-amber-400/10", border: "border-amber-400/20", glow: "shadow-[0_0_30px_#f59e0b]" };
+    if (xp >= 1000) return { name: "Jonin", color: "text-purple-500", bg: "bg-purple-400/10", border: "border-purple-400/20", glow: "shadow-[0_0_30px_#a855f7]" };
+    if (xp >= 500) return { name: "Chunin", color: "text-emerald-500", bg: "bg-emerald-400/10", border: "border-emerald-400/20", glow: "shadow-[0_0_30px_#10b981]" };
+    return { name: "Genin", color: "text-blue-500", bg: "bg-blue-400/10", border: "border-blue-400/20", glow: "shadow-[0_0_30px_#3b82f6]" };
   };
 
-  const getRank = (xp: number) => {
-    if (xp >= 2000) return "Hokage 👺";
-    if (xp >= 1000) return "Jonin ⚔️";
-    if (xp >= 500) return "Chunin 🛡️";
-    return "Genin 🍃";
+  const currentXP = userData?.xp || 0;
+  const rank = getRank(currentXP);
+
+  // v4.6 Aura Core Color Map (Simulated based on aura_theme or xp)
+  const getCoreColor = () => {
+    if (userData?.aura_theme === 'dark') return "stroke-purple-500 fill-purple-500/10";
+    if (userData?.aura_theme === 'professional') return "stroke-blue-500 fill-blue-500/10";
+    return "stroke-pink-500 fill-pink-500/10";
   };
 
-  if (loading) return <div className="p-8 text-pink-400 m-auto">Loading Profile...</div>;
+  if (loading) return (
+     <div className="flex h-screen items-center justify-center bg-dark-bg">
+        <InfinityIcon size={64} className="text-slate-200 dark:text-slate-800 animate-spin-slow" />
+     </div>
+  );
 
   return (
-    <div className="p-8 h-full max-w-5xl mx-auto w-full relative pt-20">
-      {/* Banner Section */}
-      <div className="absolute top-0 left-0 w-full h-80 -z-10 group overflow-hidden rounded-b-[3rem]">
-        <img 
-          src={profile?.banner_url} 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-          alt="Banner"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-[#0D0D15]" />
+    <div className="p-8 max-w-6xl mx-auto min-h-screen relative overflow-hidden transition-all duration-500">
+      {/* v4.6 Background Chronos Ambiance */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/[0.03] blur-[150px] rounded-full" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/[0.03] blur-[150px] rounded-full" />
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-8 rounded-[2.5rem] relative mt-24 border-white/5 shadow-2xl backdrop-blur-3xl">
-        <div className="absolute -top-20 left-12 flex items-end gap-6">
-          <div className="w-40 h-40 rounded-[2rem] overflow-hidden border-8 border-[#0D0D15] bg-black shadow-[0_20px_50px_rgba(139,92,246,0.3)]">
-            <img src={profile?.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-          </div>
-          <div className="mb-4">
-             <div className="flex items-center gap-2 px-3 py-1 bg-purple-600/20 border border-purple-500/30 rounded-full text-[10px] font-bold text-purple-400 uppercase tracking-widest mb-2">
-                <ShieldCheck size={12} /> {getRank(profile?.xp)}
-             </div>
-             <h1 className="text-5xl font-black text-white tracking-tighter drop-shadow-2xl">{profile?.username}</h1>
-          </div>
+      <header className="mb-20 flex flex-col items-center text-center relative z-10 pt-10">
+        <div className="relative group mb-12">
+           {/* v4.6 Neural Core Activation */}
+           <motion.div 
+             initial={{ opacity: 0, scale: 0.5 }}
+             animate={{ opacity: 1, scale: 1 }}
+             className="relative z-10 p-1 bg-white/[0.05] dark:bg-black/20 rounded-full border-4 border-slate-200 dark:border-white/10 shadow-2xl group-hover:scale-105 transition-transform duration-700 active:scale-95"
+           >
+              <img 
+                src={userData?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData?.username}`} 
+                className="w-48 h-48 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" 
+              />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+           </motion.div>
+           
+           {/* Aura Core Orbitals */}
+           <svg className="absolute -inset-12 w-[calc(100%+6rem)] h-[calc(100%+6rem)] pointer-events-none z-0 animate-spin-slow opacity-20">
+              <circle cx="50%" cy="50%" r="48%" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="10 20" className={getCoreColor()} />
+              <circle cx="50%" cy="50%" r="42%" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="5 15" className={getCoreColor()} />
+           </svg>
+           
+           <motion.div 
+             animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
+             transition={{ repeat: Infinity, duration: 10 }}
+             className={`absolute -bottom-4 -right-4 p-4 rounded-2xl border-4 bg-white dark:bg-black shadow-2xl z-30 flex items-center justify-center ${rank.border}`}
+           >
+              <Zap size={24} className={rank.color} />
+           </motion.div>
         </div>
 
-        <div className="flex justify-end pt-4">
-          <button onClick={() => setIsEditing(true)} className="bg-white/5 hover:bg-white/10 text-white px-6 py-2.5 rounded-xl font-bold border border-white/10 flex items-center transition-all">
-            <Edit3 size={18} className="mr-2 text-purple-400" /> Customize Profile
-          </button>
-        </div>
-
-        {/* Stats Row */}
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
-           {[
-             { label: "Total XP", val: profile?.xp, icon: Zap, color: "text-yellow-400" },
-             { label: "Vault Files", val: stats.files, icon: Folder, color: "text-blue-400" },
-             { label: "Watchlist", val: stats.watchlist, icon: List, color: "text-pink-400" },
-             { label: "Shrines", val: stats.characters, icon: UsersIcon, color: "text-purple-400" },
-           ].map((s, idx) => (
-             <div key={idx} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex flex-col items-center">
-                <s.icon size={20} className={`${s.color} mb-2`} />
-                <span className="text-2xl font-black text-white">{s.val}</span>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{s.label}</span>
-             </div>
-           ))}
-        </div>
-
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Aura Selector */}
-          <div className="p-6 bg-black/40 rounded-2xl border border-white/5">
-             <h3 className="text-lg font-bold text-white mb-6 flex items-center">
-              <Sparkles className="text-yellow-400 mr-3" size={20} /> 
-              Elite Aura Select
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-               {[
-                 { id: 'default', name: 'Original', color: 'bg-purple-600' },
-                 { id: 'naruto', name: 'Will of Fire', color: 'bg-orange-600' },
-                 { id: 'demon-slayer', name: 'Breathing Style', color: 'bg-emerald-600' },
-                 { id: 'cyberpunk', name: 'Night City', color: 'bg-yellow-400' },
-               ].map((t) => (
-                 <button 
-                  key={t.id}
-                  onClick={() => setAura(t.id)}
-                  className={`p-3 rounded-xl border transition-all text-xs font-bold uppercase tracking-widest flex items-center justify-between ${
-                    aura === t.id ? 'border-white bg-white/10 aura-text' : 'border-white/5 hover:bg-white/5 text-slate-500'
-                  }`}
-                 >
-                   {t.name}
-                   <div className={`w-2 h-2 rounded-full ${t.color}`} />
-                 </button>
-               ))}
-            </div>
-            <p className="text-[10px] text-slate-500 mt-4 italic">Auras dynamically transform your profile's energy and glow.</p>
-          </div>
-          
-          <div className="p-6 bg-black/40 rounded-2xl border border-white/5 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-               <ImageIcon size={100} className="text-purple-400" />
-            </div>
-            <h3 className="text-lg font-bold text-white mb-6 flex items-center">
-              <User className="text-purple-400 mr-3 shadow-purple-500/50" size={20} /> 
-              Identity Vault
-            </h3>
-            <div className="space-y-6">
-              <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 italic flex items-center gap-2">
-                   <Mail size={12} /> Contact Secured
-                </p>
-                <p className="text-slate-300 font-medium">{profile?.email}</p>
+        <div className="space-y-4">
+           <div className="flex items-center justify-center gap-3">
+              <h1 className="text-6xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic leading-none">{userData?.username}</h1>
+              <div className={`px-4 py-1.5 rounded-full border-4 ${rank.bg} ${rank.color} ${rank.border} ${rank.glow} font-black text-xs uppercase italic animate-pulse`}>
+                 {rank.name} RANK
               </div>
-              <div>
-                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 italic flex items-center gap-2">
-                   <Calendar size={12} /> Member Since
-                </p>
-                <p className="text-slate-300 font-medium">{profile?.created_at}</p>
+           </div>
+           <p className="text-slate-500 font-bold text-xl uppercase tracking-[0.2em]">{userData?.email}</p>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 relative z-10">
+        {/* v4.6 Stats Hub */}
+        <div className="lg:col-span-2 space-y-10">
+           <div className="glass-panel p-10 rounded-[3rem] border-2 border-slate-200 dark:border-white/10 bg-white/60 dark:bg-black/60 shadow-2xl backdrop-blur-3xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-10">
+                 <Activity size={32} className="text-slate-200 dark:text-slate-800 animate-pulse" />
               </div>
-            </div>
-          </div>
+              <h2 className="text-3xl font-black mb-10 text-slate-900 dark:text-white uppercase tracking-tighter flex items-center italic">
+                 <span className="w-4 h-10 bg-purple-500 rounded-full mr-5 shadow-[0_0_20px_#8b5cf6]"></span>
+                 SYNCHRONIZATION PROFILE
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                 {[
+                   { label: 'Neural Synergy', value: '100%', icon: Cpu, color: 'text-purple-500' },
+                   { label: 'Vault Mastery', value: `${currentXP}XP`, icon: Target, color: 'text-amber-500' },
+                   { label: 'Storage Link', value: 'Production', icon: Database, color: 'text-emerald-500' }
+                 ].map(stat => (
+                   <div key={stat.label} className="p-8 rounded-[2rem] bg-slate-100 dark:bg-white/[0.03] border-2 border-slate-200 dark:border-white/5 transition-all group-hover:border-purple-500/20">
+                      <stat.icon size={24} className={`${stat.color} mb-4`} />
+                      <div className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1">{stat.value}</div>
+                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</div>
+                   </div>
+                 ))}
+              </div>
+
+              <div className="mt-10 p-10 rounded-[2.5rem] border-4 border-dashed border-slate-200 dark:border-white/10 group-hover:border-purple-500/40 transition-all transition-colors">
+                 <h4 className="text-[12px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.4em] mb-6">Mastery Badges</h4>
+                 <div className="flex flex-wrap gap-4">
+                    {[1,2,3,4,5].map(i => (
+                       <motion.div 
+                         key={i}
+                         whileHover={{ scale: 1.1, rotate: 10 }}
+                         className={`w-14 h-14 rounded-2xl bg-white dark:bg-black/40 border-2 border-slate-200 dark:border-white/5 flex items-center justify-center shadow-2xl relative ${i <= masteryLevel ? 'aura-border opacity-100' : 'opacity-20'}`}
+                       >
+                          <Award size={24} className={i <= 3 ? 'text-amber-500' : 'text-slate-400'} />
+                       </motion.div>
+                    ))}
+                 </div>
+              </div>
+           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-           {/* Progression Card */}
-           <div className="p-6 bg-gradient-to-br from-purple-900/20 to-pink-900/10 rounded-2xl border border-purple-500/10">
-             <h3 className="text-lg font-bold text-white mb-6 flex items-center">
-              <Zap className="text-yellow-400 mr-3" size={20} /> 
-              Rank Mastery
-            </h3>
-            <div className="space-y-4">
-               <div className="flex justify-between items-end mb-2">
-                  <span className="text-sm font-bold text-slate-400">XP Progress</span>
-                  <span className="text-sm font-black text-purple-400">{profile?.xp % 500} / 500</span>
-               </div>
-               <div className="w-full h-3 bg-black/50 rounded-full border border-white/5 overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(profile?.xp % 500) / 5}%` }}
-                    className="h-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-[length:200%_auto] shadow-[0_0_20px_rgba(139,92,246,0.4)]"
-                  />
-               </div>
-               <p className="text-xs text-slate-500 italic mt-4">Gain XP by sharing with the community and expanding your vault.</p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      <AnimatePresence>
-        {isEditing && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 shadow-lg" onClick={() => setIsEditing(false)} />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full max-w-sm glass-panel border border-pink-500/30 rounded-2xl relative z-10 p-6">
-              <button onClick={() => setIsEditing(false)} className="absolute top-4 right-4 text-slate-400"><X size={20} /></button>
-              <h2 className="text-xl font-bold mb-4 text-pink-400">Settings</h2>
+        {/* v4.6 Profile Actions */}
+        <div className="space-y-10">
+           <div className="glass-panel p-10 rounded-[3rem] border-2 border-slate-200 dark:border-white/10 bg-white/60 dark:bg-black/60 shadow-2xl backdrop-blur-3xl group">
+              <h2 className="text-2xl font-black mb-8 text-slate-900 dark:text-white uppercase tracking-tighter italic">NEURAL SETTINGS</h2>
               <div className="space-y-4">
-                <div><label className="block text-sm text-slate-300">Username</label><input type="text" value={editUsername} onChange={e => setEditUsername(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-slate-200 mt-1" /></div>
-                <div><label className="block text-sm text-slate-300">Email</label><input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-slate-200 mt-1" /></div>
-                <div><label className="block text-xs font-bold text-slate-400 uppercase mb-1">Avatar Image URL</label><input type="url" value={editAvatar} onChange={e => setEditAvatar(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-slate-200 mt-1 text-xs focus:border-purple-500/50 outline-none" /></div>
-                <div><label className="block text-xs font-bold text-slate-400 uppercase mb-1">Banner Image URL</label><input type="url" value={editBanner} onChange={e => setEditBanner(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-slate-200 mt-1 text-xs focus:border-purple-500/50 outline-none" /></div>
-                <div className="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-xl text-[10px] text-yellow-400 flex items-center"><AlertTriangle size={14} className="mr-2 shrink-0" /> Security: Changing email requires two-factor validation via email links.</div>
-                <button onClick={handleSaveProfile} disabled={saving} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-purple-500/20 transition-all mt-2">{saving ? "Updating Genesis..." : "Push Modifications"}</button>
+                 {[
+                   { label: 'Security Link', icon: Shield, color: 'text-emerald-500' },
+                   { label: 'Neural Theme', icon: Sparkles, color: 'text-purple-500' },
+                   { label: 'Sensory Config', icon: Settings, color: 'text-blue-500' }
+                 ].map(action => (
+                   <button key={action.label} className="w-full p-6 rounded-[1.5rem] bg-white dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 flex items-center gap-4 hover:border-purple-500/50 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-all group">
+                      <div className={`p-3 rounded-xl bg-slate-100 dark:bg-black/20 ${action.color} group-hover:scale-110 transition-transform`}>
+                         <action.icon size={18} />
+                      </div>
+                      <span className="text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">{action.label}</span>
+                   </button>
+                 ))}
+                 
+                 <div className="pt-6 mt-6 border-t border-slate-200 dark:border-white/10">
+                    <button className="w-full p-6 rounded-[1.5rem] bg-red-600/10 border-2 border-red-500/20 flex items-center gap-4 hover:bg-red-600 hover:text-white group transition-all">
+                       <LogOut size={18} className="text-red-500 group-hover:text-white group-hover:-translate-x-2 transition-transform" />
+                       <span className="text-[11px] font-black uppercase tracking-widest text-red-500 group-hover:text-white">Sever Connection</span>
+                    </button>
+                 </div>
               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+           </div>
+
+           <div className="p-10 rounded-[3rem] bg-gradient-to-br from-purple-900/50 to-black border-2 border-purple-500/20 shadow-2xl relative overflow-hidden hidden lg:block">
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-purple-500/20 blur-[50px] rounded-full" />
+              <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-4 italic">v4.6 HIGHLIGHT</h3>
+              <p className="text-slate-400 text-xs font-bold leading-relaxed mb-8 uppercase tracking-widest">Your Aura Core is currently projecting a high-fidelity sync. Synchronize more anime to unlock the next spectral threshold.</p>
+              <div className="flex items-center gap-3">
+                 <div className="flex -space-x-4">
+                    {[1,2,3].map(i => <img key={i} src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${i*123}`} className="w-8 h-8 rounded-full border-2 border-black" />)}
+                 </div>
+                 <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest">Linked with 12 Synced Peers</span>
+              </div>
+           </div>
+        </div>
+      </div>
     </div>
   );
 }
+
+const masteryLevel = 3; // Placeholder for logic

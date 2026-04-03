@@ -5,6 +5,7 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
 import CommandPalette from "@/components/CommandPalette";
+import PartySync from "@/components/PartySync";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { usePathname } from "next/navigation";
@@ -79,6 +80,7 @@ export default function RootLayout({
           <main className={`flex-1 overflow-y-auto relative ${showNav ? 'pt-16' : ''}`}>
             <div className="absolute inset-0 bg-gradient-to-br from-purple-900/5 via-black to-blue-900/5 -z-10" />
             <CommandPalette />
+            <PartySync />
             {children}
           </main>
         </div>
